@@ -1,0 +1,28 @@
+{
+  "name": "swastprova-backend",
+  "version": "1.0.0",
+  "description": "Swastprova Backend API",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "swastprova",
+    "backend",
+    "express"
+  ],
+  "author": "Sachin",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "nodemailer": "^8.0.11"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
