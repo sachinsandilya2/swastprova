@@ -9,14 +9,23 @@ dotenv.config();
 const app = express();
 
 /* MIDDLEWARE */
-app.use(cors());
+app.use(cors({
+  origin: "*",   // 🔥 phone + Vercel fix
+  methods: ["GET", "POST"]
+}));
+
 app.use(express.json());
+
+/* CHECK ENV */
+if (!process.env.GEMINI_API_KEY) {
+  console.error("❌ GEMINI_API_KEY missing");
+}
 
 /* GEMINI SETUP */
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash", // ⚠️ safer stable model (change from 2.5 if error aata hai)
+  model: "gemini-1.5-flash",
 });
 
 /* HEALTH CHECK */
@@ -59,15 +68,15 @@ app.post("/contact", async (req, res) => {
       `,
     });
 
-    return res.json({
+    res.json({
       success: true,
       message: "Message sent successfully",
     });
 
   } catch (error) {
-    console.error("CONTACT ERROR:", error);
+    console.error("CONTACT ERROR:", error.message);
 
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: "Failed to send message",
     });
@@ -107,15 +116,15 @@ app.post("/connect-mentor", async (req, res) => {
       `,
     });
 
-    return res.json({
+    res.json({
       success: true,
       message: "Mentor request sent",
     });
 
   } catch (error) {
-    console.error("MENTOR ERROR:", error);
+    console.error("MENTOR ERROR:", error.message);
 
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: "Failed mentor request",
     });
@@ -149,15 +158,15 @@ User: ${message}
     const result = await model.generateContent(prompt);
     const reply = result.response.text();
 
-    return res.json({
+    res.json({
       success: true,
       reply,
     });
 
   } catch (error) {
-    console.error("AI ERROR:", error);
+    console.error("AI ERROR:", error.message);
 
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: "AI error occurred",
     });

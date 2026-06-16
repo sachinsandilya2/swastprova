@@ -1,10 +1,12 @@
-
 import { useState } from "react";
 
 const LiveChat = () => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // 🔥 IMPORTANT: Render backend URL
+  const API_URL = "https://swastprova-2.onrender.com";
 
   const sendMessage = async () => {
     if (!message.trim()) return;
@@ -23,28 +25,22 @@ const LiveChat = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            message: userMessage,
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+        }),
+      });
 
       const data = await response.json();
 
       setMessages((prev) => [
         ...prev,
         {
-          text:
-            data.reply ||
-            "No response received",
+          text: data.reply || "No response received",
           sender: "Swastprova AI",
         },
       ]);
@@ -54,8 +50,7 @@ const LiveChat = () => {
       setMessages((prev) => [
         ...prev,
         {
-          text:
-            "❌ Failed to connect with AI",
+          text: "❌ Failed to connect with AI",
           sender: "System",
         },
       ]);
@@ -70,22 +65,12 @@ const LiveChat = () => {
 
       <div style={styles.chatBox}>
         {messages.map((msg, index) => (
-          <div
-            key={index}
-            style={styles.message}
-          >
-            <strong>
-              {msg.sender}:
-            </strong>{" "}
-            {msg.text}
+          <div key={index} style={styles.message}>
+            <strong>{msg.sender}:</strong> {msg.text}
           </div>
         ))}
 
-        {loading && (
-          <div style={styles.message}>
-            🤖 Thinking...
-          </div>
-        )}
+        {loading && <div style={styles.message}>🤖 Thinking...</div>}
       </div>
 
       <div style={styles.inputArea}>
@@ -93,20 +78,14 @@ const LiveChat = () => {
           type="text"
           placeholder="Ask Swastprova..."
           value={message}
-          onChange={(e) =>
-            setMessage(e.target.value)
-          }
+          onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter")
-              sendMessage();
+            if (e.key === "Enter") sendMessage();
           }}
           style={styles.input}
         />
 
-        <button
-          onClick={sendMessage}
-          style={styles.button}
-        >
+        <button onClick={sendMessage} style={styles.button}>
           Send
         </button>
       </div>
@@ -162,4 +141,3 @@ const styles = {
 };
 
 export default LiveChat;
-
