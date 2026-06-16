@@ -8,7 +8,7 @@ dotenv.config();
 
 const app = express();
 
-/* MIDDLEWARE */
+/* ================= MIDDLEWARE ================= */
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST"]
@@ -16,24 +16,24 @@ app.use(cors({
 
 app.use(express.json());
 
-/* ENV CHECK */
+/* ================= ENV CHECK ================= */
 if (!process.env.GEMINI_API_KEY) {
   console.error("❌ GEMINI_API_KEY missing");
 }
 
-/* GEMINI SETUP */
+/* ================= GEMINI SETUP ================= */
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({
   model: "gemini-1.5-flash",
 });
 
-/* HEALTH CHECK */
+/* ================= HEALTH CHECK ================= */
 app.get("/", (req, res) => {
   res.send("🚀 Swastprova Backend Running...");
 });
 
-/* CONTACT FORM */
+/* ================= CONTACT API ================= */
 app.post("/contact", async (req, res) => {
   try {
     const { name, email, message } = req.body;
@@ -68,22 +68,21 @@ app.post("/contact", async (req, res) => {
       `,
     });
 
-    res.json({
+    return res.json({
       success: true,
       message: "Message sent successfully",
     });
 
   } catch (error) {
-    console.error("CONTACT ERROR:", error.message);
-
-    res.status(500).json({
+    console.error("CONTACT ERROR:", error);
+    return res.status(500).json({
       success: false,
       message: "Failed to send message",
     });
   }
 });
 
-/* MENTOR REQUEST */
+/* ================= MENTOR API ================= */
 app.post("/connect-mentor", async (req, res) => {
   try {
     const { mentorName, mentorField } = req.body;
@@ -116,24 +115,25 @@ app.post("/connect-mentor", async (req, res) => {
       `,
     });
 
-    res.json({
+    return res.json({
       success: true,
       message: "Mentor request sent",
     });
 
   } catch (error) {
-    console.error("MENTOR ERROR:", error.message);
-
-    res.status(500).json({
+    console.error("MENTOR ERROR:", error);
+    return res.status(500).json({
       success: false,
       message: "Failed mentor request",
     });
   }
 });
 
-/* AI CHAT */
+/* ================= AI CHAT ================= */
 app.post("/chat", async (req, res) => {
   try {
+    console.log("🔥 CHAT HIT:", req.body);
+
     const { message } = req.body;
 
     if (!message) {
@@ -148,37 +148,45 @@ You are Swastprova AI.
 
 Rules:
 - Helpful answers
-- Reflection questions
-- One action step
+- Simple language
 - Motivational tone
+- Ask reflection question
+- Give 1 action step
 
 User: ${message}
 `;
 
     const result = await model.generateContent(prompt);
-
-    // 🔥 SAFE FIX (important)
     const response = await result.response;
-    const reply = response.text();
 
-    console.log("AI REPLY:", reply);
+    // ✅ SAFE RESPONSE HANDLING
+    let reply = "No response generated";
 
-    res.json({
+    try {
+      reply = response.text?.() || reply;
+    } catch (e) {
+      console.error("PARSE ERROR:", e);
+      reply = "AI parsing error";
+    }
+
+    console.log("🤖 AI REPLY:", reply);
+
+    return res.json({
       success: true,
       reply,
     });
 
   } catch (error) {
-    console.error("AI ERROR:", error.message);
+    console.error("❌ AI ERROR:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "AI error occurred",
     });
   }
 });
 
-/* SERVER */
+/* ================= START SERVER ================= */
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
