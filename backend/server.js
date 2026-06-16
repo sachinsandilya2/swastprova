@@ -10,13 +10,13 @@ const app = express();
 
 /* MIDDLEWARE */
 app.use(cors({
-  origin: "*",   // 🔥 phone + Vercel fix
+  origin: "*",
   methods: ["GET", "POST"]
 }));
 
 app.use(express.json());
 
-/* CHECK ENV */
+/* ENV CHECK */
 if (!process.env.GEMINI_API_KEY) {
   console.error("❌ GEMINI_API_KEY missing");
 }
@@ -156,7 +156,12 @@ User: ${message}
 `;
 
     const result = await model.generateContent(prompt);
-    const reply = result.response.text();
+
+    // 🔥 SAFE FIX (important)
+    const response = await result.response;
+    const reply = response.text();
+
+    console.log("AI REPLY:", reply);
 
     res.json({
       success: true,
