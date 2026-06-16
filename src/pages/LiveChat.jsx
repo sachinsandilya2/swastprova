@@ -5,7 +5,6 @@ const LiveChat = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 🔥 IMPORTANT: Render backend URL
   const API_URL = "https://swastprova-2.onrender.com";
 
   const sendMessage = async () => {
@@ -15,10 +14,7 @@ const LiveChat = () => {
 
     setMessages((prev) => [
       ...prev,
-      {
-        text: userMessage,
-        sender: "You",
-      },
+      { text: userMessage, sender: "You" },
     ]);
 
     setMessage("");
@@ -30,10 +26,13 @@ const LiveChat = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          message: userMessage,
-        }),
+        body: JSON.stringify({ message: userMessage }),
       });
+
+      // 🔥 IMPORTANT: check response first
+      if (!response.ok) {
+        throw new Error(`Server Error: ${response.status}`);
+      }
 
       const data = await response.json();
 
@@ -45,12 +44,12 @@ const LiveChat = () => {
         },
       ]);
     } catch (error) {
-      console.error(error);
+      console.error("CHAT ERROR:", error);
 
       setMessages((prev) => [
         ...prev,
         {
-          text: "❌ Failed to connect with AI",
+          text: "❌ Failed to connect with AI (Server Issue)",
           sender: "System",
         },
       ]);
@@ -70,7 +69,11 @@ const LiveChat = () => {
           </div>
         ))}
 
-        {loading && <div style={styles.message}>🤖 Thinking...</div>}
+        {loading && (
+          <div style={styles.message}>
+            🤖 Thinking...
+          </div>
+        )}
       </div>
 
       <div style={styles.inputArea}>
