@@ -1,11 +1,11 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Navbar from "./component/Navbar";
+// IMPORTANT: components hai, component nahi
+import Navbar from "./components/Navbar";
 
 import Home from "./pages/Home";
+import About from "./pages/About";
 import Health from "./pages/Health";
-
 import LiveChat from "./pages/LiveChat";
 import MentalHealth from "./pages/MentalHealth";
 import Psychologists from "./pages/Psychologists";
@@ -20,13 +20,15 @@ import Register from "./pages/Register";
 function App() {
   return (
     <BrowserRouter>
+
+      {/* Navbar */}
       <Navbar />
 
       <Routes>
-        {/* Step 1 */}
-        <Route path="/" element={<Home />} />
 
-        {/* Step 2 */}
+        {/* Main Pages */}
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
         <Route path="/health" element={<Health />} />
 
         {/* Health Services */}
@@ -35,14 +37,18 @@ function App() {
         <Route path="/psychologists" element={<Psychologists />} />
         <Route path="/mentors" element={<Mentors />} />
         <Route path="/progress" element={<Progress />} />
+
+        {/* Community */}
         <Route path="/articles" element={<Articles />} />
         <Route path="/community" element={<Community />} />
         <Route path="/contact" element={<Contact />} />
 
-        {/* Auth */}
+        {/* Authentication */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
       </Routes>
+
     </BrowserRouter>
   );
 }
