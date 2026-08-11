@@ -1,18 +1,18 @@
 import { useState } from "react";
 
-const API_URL = "https://swastprova-2.onrender.com";
-
 const LiveChat = () => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const API_URL = "https://swastprova-2.onrender.com";
 
   const sendMessage = async () => {
     if (!message.trim() || loading) return;
 
     const userMessage = message.trim();
 
-    // Show user message immediately
+    // User message show
     setMessages((prev) => [
       ...prev,
       {
@@ -32,7 +32,6 @@ const LiveChat = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
         },
         body: JSON.stringify({
           message: userMessage,
@@ -41,43 +40,35 @@ const LiveChat = () => {
 
       console.log("📡 Server status:", response.status);
 
+      // Response ko pehle text ke form mein read karo
       const rawText = await response.text();
 
       console.log("📦 Server response:", rawText);
 
-      let data = null;
+      let data;
 
       try {
         data = JSON.parse(rawText);
-      } catch (parseError) {
+      } catch {
         throw new Error(
-          `Server returned invalid response: ${rawText.substring(
-            0,
-            200
-          )}`
+          `Server returned invalid response: ${rawText.substring(0, 200)}`
         );
       }
 
-      // HTTP error
       if (!response.ok) {
         throw new Error(
-          data?.message ||
-            `Server Error: ${response.status}`
+          data?.message || `Server Error: ${response.status}`
         );
       }
 
-      // Backend success false
-      if (data?.success === false) {
+      if (!data?.success) {
         throw new Error(
           data?.message || "AI request failed"
         );
       }
 
-      // Reply missing
       if (!data?.reply) {
-        throw new Error(
-          "AI returned an empty response."
-        );
+        throw new Error("AI returned empty response");
       }
 
       // AI response
@@ -92,20 +83,10 @@ const LiveChat = () => {
     } catch (error) {
       console.error("❌ CHAT ERROR:", error);
 
-      let errorMessage =
-        "Unable to connect with Swastprova AI.";
-
-      if (error.name === "TypeError") {
-        errorMessage =
-          "Unable to connect to the AI server. Please check your backend server.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
       setMessages((prev) => [
         ...prev,
         {
-          text: `❌ ${errorMessage}`,
+          text: `❌ ${error.message || "Failed to connect with AI"}`,
           sender: "System",
           type: "error",
         },
@@ -119,12 +100,9 @@ const LiveChat = () => {
     <div style={styles.page}>
       <div style={styles.container}>
 
-        {/* ================= HEADER ================= */}
-
+        {/* Header */}
         <div style={styles.header}>
-          <div style={styles.aiIcon}>
-            🤖
-          </div>
+          <div style={styles.aiIcon}>🤖</div>
 
           <div>
             <h1 style={styles.title}>
@@ -137,13 +115,11 @@ const LiveChat = () => {
           </div>
         </div>
 
-        {/* ================= CHAT BOX ================= */}
-
+        {/* Chat Box */}
         <div style={styles.chatBox}>
 
           {messages.length === 0 && (
             <div style={styles.welcome}>
-
               <div style={styles.welcomeIcon}>
                 💙
               </div>
@@ -153,11 +129,9 @@ const LiveChat = () => {
               </h2>
 
               <p>
-                Ask me about health awareness,
-                mental wellness, personal growth
-                or general guidance.
+                Ask me about health awareness, mental wellness,
+                personal growth or general guidance.
               </p>
-
             </div>
           )}
 
@@ -175,11 +149,9 @@ const LiveChat = () => {
               <div
                 style={{
                   ...styles.message,
-
                   ...(msg.type === "user"
                     ? styles.userMessage
                     : {}),
-
                   ...(msg.type === "error"
                     ? styles.errorMessage
                     : {}),
@@ -196,12 +168,10 @@ const LiveChat = () => {
             </div>
           ))}
 
-          {/* ================= THINKING ================= */}
-
+          {/* Loading */}
           {loading && (
             <div style={styles.messageRow}>
               <div style={styles.message}>
-
                 <strong style={styles.sender}>
                   Swastprova AI
                 </strong>
@@ -209,25 +179,19 @@ const LiveChat = () => {
                 <div style={styles.thinking}>
                   🤖 Thinking...
                 </div>
-
               </div>
             </div>
           )}
-
         </div>
 
-        {/* ================= INPUT ================= */}
-
+        {/* Input */}
         <div style={styles.inputArea}>
-
           <input
             type="text"
             placeholder="Ask Swastprova AI..."
             value={message}
             disabled={loading}
-            onChange={(e) =>
-              setMessage(e.target.value)
-            }
+            onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 sendMessage();
@@ -238,32 +202,22 @@ const LiveChat = () => {
 
           <button
             onClick={sendMessage}
-            disabled={
-              loading || !message.trim()
-            }
+            disabled={loading || !message.trim()}
             style={{
               ...styles.button,
               opacity:
                 loading || !message.trim()
                   ? 0.6
                   : 1,
-              cursor:
-                loading || !message.trim()
-                  ? "not-allowed"
-                  : "pointer",
             }}
           >
             {loading ? "..." : "Send"}
           </button>
-
         </div>
 
-        {/* ================= NOTE ================= */}
-
         <p style={styles.note}>
-          Swastprova AI provides general information
-          and is not a replacement for a qualified
-          healthcare professional.
+          Swastprova AI provides general information and is not a
+          replacement for a qualified healthcare professional.
         </p>
 
       </div>
@@ -271,20 +225,12 @@ const LiveChat = () => {
   );
 };
 
-
-/* =====================================================
-   STYLES
-===================================================== */
-
 const styles = {
-
   page: {
     minHeight: "100vh",
     padding: "50px 20px",
-    boxSizing: "border-box",
-
     background:
-      "linear-gradient(135deg,#eff6ff,#f5f3ff,#fdf2f8)",
+      "linear-gradient(135deg, #eff6ff, #f5f3ff, #fdf2f8)",
   },
 
   container: {
@@ -303,16 +249,12 @@ const styles = {
     width: "55px",
     height: "55px",
     borderRadius: "16px",
-
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-
     background:
-      "linear-gradient(135deg,#2563eb,#7c3aed)",
-
+      "linear-gradient(135deg, #2563eb, #7c3aed)",
     fontSize: "28px",
-
     boxShadow:
       "0 10px 25px rgba(37,99,235,0.25)",
   },
@@ -332,34 +274,21 @@ const styles = {
     height: "500px",
     padding: "20px",
     overflowY: "auto",
-
-    background:
-      "rgba(255,255,255,0.9)",
-
-    border:
-      "1px solid #e2e8f0",
-
+    background: "rgba(255,255,255,0.9)",
+    border: "1px solid #e2e8f0",
     borderRadius: "22px",
-
     boxShadow:
-      "0 12px 30px rgba(15,23,42,0.06)",
-
-    boxSizing: "border-box",
+      "0 15px 40px rgba(15,23,42,0.08)",
   },
 
   welcome: {
     height: "100%",
-
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-
     textAlign: "center",
     color: "#475569",
-
-    padding: "20px",
-    boxSizing: "border-box",
   },
 
   welcomeIcon: {
@@ -376,25 +305,20 @@ const styles = {
     maxWidth: "75%",
     padding: "13px 16px",
     borderRadius: "16px",
-
     background: "#f1f5f9",
     color: "#0f172a",
-
-    wordBreak: "break-word",
   },
 
   userMessage: {
     background:
-      "linear-gradient(135deg,#2563eb,#7c3aed)",
-
+      "linear-gradient(135deg, #2563eb, #7c3aed)",
     color: "white",
   },
 
   errorMessage: {
     background: "#fef2f2",
     color: "#991b1b",
-    border:
-      "1px solid #fecaca",
+    border: "1px solid #fecaca",
   },
 
   sender: {
@@ -421,14 +345,9 @@ const styles = {
 
   input: {
     flex: 1,
-    minWidth: 0,
-
     padding: "14px 16px",
-
     borderRadius: "14px",
-    border:
-      "1px solid #cbd5e1",
-
+    border: "1px solid #cbd5e1",
     outline: "none",
     fontSize: "15px",
     background: "white",
@@ -436,15 +355,13 @@ const styles = {
 
   button: {
     padding: "14px 24px",
-
     border: "none",
     borderRadius: "14px",
-
     background:
-      "linear-gradient(135deg,#2563eb,#7c3aed)",
-
+      "linear-gradient(135deg, #2563eb, #7c3aed)",
     color: "white",
     fontWeight: "700",
+    cursor: "pointer",
   },
 
   note: {
@@ -453,7 +370,6 @@ const styles = {
     fontSize: "12px",
     marginTop: "15px",
   },
-
 };
 
 export default LiveChat;
