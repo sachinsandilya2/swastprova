@@ -25,42 +25,75 @@ const Progress = () => {
 
   const progressRef = doc(db, "progress", userId);
 
-  // ================= LOAD DATA =================
+  // =====================================================
+  // LOAD DATA FROM FIREBASE
+  // =====================================================
 
   useEffect(() => {
+    let mounted = true;
+
     const loadProgress = async () => {
       try {
         const snapshot = await getDoc(progressRef);
 
-        if (snapshot.exists()) {
-          setProgress(snapshot.data());
+        if (snapshot.exists() && mounted) {
+          const data = snapshot.data();
+
+          setProgress((prev) => ({
+            ...prev,
+            streak: Number(data.streak ?? prev.streak),
+            goalsCompleted: Number(
+              data.goalsCompleted ?? prev.goalsCompleted
+            ),
+            totalGoals: Number(
+              data.totalGoals ?? prev.totalGoals
+            ),
+            moodScore: Number(
+              data.moodScore ?? prev.moodScore
+            ),
+          }));
         }
       } catch (error) {
         console.error("❌ Error loading progress:", error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadProgress();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // ================= UPDATE VALUE =================
+  // =====================================================
+  // UPDATE VALUE
+  // =====================================================
 
   const updateProgress = (field, value) => {
+    const numberValue = Number(value);
+
     setProgress((prev) => ({
       ...prev,
-      [field]: Number(value),
+      [field]: Number.isNaN(numberValue) ? 0 : numberValue,
     }));
 
     setSaved(false);
   };
 
-  // ================= SAVE TO FIREBASE =================
+  // =====================================================
+  // SAVE TO FIREBASE
+  // =====================================================
 
   const saveProgress = async () => {
+    if (saving) return;
+
     try {
       setSaving(true);
+      setSaved(false);
 
       await setDoc(progressRef, {
         streak: Number(progress.streak),
@@ -75,7 +108,6 @@ const Progress = () => {
       setTimeout(() => {
         setSaved(false);
       }, 2500);
-
     } catch (error) {
       console.error("❌ Firebase Save Error:", error);
       alert("Progress save nahi ho paya.");
@@ -84,21 +116,9 @@ const Progress = () => {
     }
   };
 
-  // ================= LOADING =================
-
-  if (loading) {
-    return (
-      <div style={styles.loading}>
-        <div style={styles.loadingIcon}>📊</div>
-
-        <h2>Loading your progress...</h2>
-
-        <p>Please wait...</p>
-      </div>
-    );
-  }
-
-  // ================= PERCENTAGE =================
+  // =====================================================
+  // PERCENTAGE
+  // =====================================================
 
   const goalPercentage =
     progress.totalGoals > 0
@@ -106,6 +126,15 @@ const Progress = () => {
           (progress.goalsCompleted / progress.totalGoals) * 100
         )
       : 0;
+
+  const safeGoalPercentage = Math.min(
+    Math.max(goalPercentage, 0),
+    100
+  );
+
+  // =====================================================
+  // PAGE
+  // =====================================================
 
   return (
     <div style={styles.page}>
@@ -132,7 +161,6 @@ const Progress = () => {
 
       </section>
 
-
       {/* ================= STATS ================= */}
 
       <section style={styles.statsGrid}>
@@ -142,6 +170,7 @@ const Progress = () => {
         <div style={styles.card}>
 
           <div style={styles.cardTop}>
+
             <div style={styles.iconBlue}>
               🔥
             </div>
@@ -149,6 +178,7 @@ const Progress = () => {
             <span style={styles.label}>
               CURRENT STREAK
             </span>
+
           </div>
 
           <h2 style={styles.number}>
@@ -165,12 +195,12 @@ const Progress = () => {
 
         </div>
 
-
         {/* GOALS */}
 
         <div style={styles.card}>
 
           <div style={styles.cardTop}>
+
             <div style={styles.iconPurple}>
               🎯
             </div>
@@ -178,36 +208,42 @@ const Progress = () => {
             <span style={styles.label}>
               GOALS COMPLETED
             </span>
+
           </div>
 
           <h2 style={styles.number}>
+
             {progress.goalsCompleted}
+
             <span style={styles.total}>
               {" "}/ {progress.totalGoals}
             </span>
+
           </h2>
 
           <div style={styles.progressBackground}>
+
             <div
               style={{
                 ...styles.progressBar,
-                width: `${Math.min(goalPercentage, 100)}%`,
+                width: `${safeGoalPercentage}%`,
               }}
             />
+
           </div>
 
           <p style={styles.smallText}>
-            {goalPercentage}% completed
+            {safeGoalPercentage}% completed
           </p>
 
         </div>
-
 
         {/* MOOD */}
 
         <div style={styles.card}>
 
           <div style={styles.cardTop}>
+
             <div style={styles.iconPink}>
               😊
             </div>
@@ -215,13 +251,17 @@ const Progress = () => {
             <span style={styles.label}>
               MOOD SCORE
             </span>
+
           </div>
 
           <h2 style={styles.number}>
+
             {progress.moodScore}
+
             <span style={styles.percent}>
               %
             </span>
+
           </h2>
 
           <p style={styles.smallText}>
@@ -232,7 +272,6 @@ const Progress = () => {
 
       </section>
 
-
       {/* ================= UPDATE ================= */}
 
       <section style={styles.updateSection}>
@@ -240,6 +279,7 @@ const Progress = () => {
         <div style={styles.updateHeader}>
 
           <div>
+
             <span style={styles.sectionBadge}>
               UPDATE
             </span>
@@ -252,14 +292,16 @@ const Progress = () => {
               Enter your latest progress and save it
               securely to Firebase.
             </p>
+
           </div>
 
           <div style={styles.firebaseBadge}>
-            🔥 continue
+            🔥 Firebase Connected
           </div>
 
         </div>
 
+        {/* ================= FORM ================= */}
 
         <div style={styles.formGrid}>
 
@@ -286,7 +328,6 @@ const Progress = () => {
 
           </div>
 
-
           {/* GOALS */}
 
           <div style={styles.field}>
@@ -311,7 +352,6 @@ const Progress = () => {
 
           </div>
 
-
           {/* TOTAL GOALS */}
 
           <div style={styles.field}>
@@ -334,7 +374,6 @@ const Progress = () => {
             />
 
           </div>
-
 
           {/* MOOD */}
 
@@ -362,8 +401,7 @@ const Progress = () => {
 
         </div>
 
-
-        {/* SAVE */}
+        {/* ================= SAVE ================= */}
 
         <div style={styles.saveArea}>
 
@@ -373,11 +411,16 @@ const Progress = () => {
             style={{
               ...styles.saveButton,
               opacity: saving ? 0.7 : 1,
+              cursor: saving
+                ? "not-allowed"
+                : "pointer",
             }}
           >
+
             {saving
               ? "⏳ Saving..."
               : "💾 Save My Progress"}
+
           </button>
 
           {saved && (
@@ -388,8 +431,15 @@ const Progress = () => {
 
         </div>
 
-      </section>
+        {/* SMALL FIREBASE STATUS */}
 
+        {loading && (
+          <p style={styles.loadingStatus}>
+            🔄 Loading saved progress...
+          </p>
+        )}
+
+      </section>
 
       {/* ================= INFO ================= */}
 
@@ -400,6 +450,7 @@ const Progress = () => {
         </div>
 
         <div>
+
           <h3 style={styles.infoTitle}>
             Keep going, one step at a time.
           </h3>
@@ -409,6 +460,7 @@ const Progress = () => {
             Consistent small steps can help you build
             sustainable habits.
           </p>
+
         </div>
 
       </section>
@@ -428,21 +480,6 @@ const styles = {
     minHeight: "100vh",
     background: "#f8fafc",
     paddingBottom: "70px",
-  },
-
-  loading: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#f8fafc",
-    color: "#0f172a",
-  },
-
-  loadingIcon: {
-    fontSize: "55px",
-    marginBottom: "15px",
   },
 
   hero: {
@@ -469,6 +506,7 @@ const styles = {
     margin: "22px 0 15px",
     letterSpacing: "-3px",
     fontWeight: "900",
+    color: "#0f172a",
   },
 
   gradientText: {
@@ -502,7 +540,7 @@ const styles = {
     borderRadius: "22px",
     border: "1px solid #e2e8f0",
     boxShadow:
-      "0 15px 35px rgba(15,23,42,0.07)",
+      "0 10px 25px rgba(15,23,42,0.05)",
   },
 
   cardTop: {
@@ -602,7 +640,7 @@ const styles = {
     borderRadius: "25px",
     border: "1px solid #e2e8f0",
     boxShadow:
-      "0 15px 40px rgba(15,23,42,0.06)",
+      "0 10px 30px rgba(15,23,42,0.05)",
   },
 
   updateHeader: {
@@ -623,6 +661,7 @@ const styles = {
   updateTitle: {
     margin: "8px 0",
     fontSize: "30px",
+    color: "#0f172a",
   },
 
   updateDescription: {
@@ -685,17 +724,22 @@ const styles = {
     background:
       "linear-gradient(135deg,#2563eb,#7c3aed)",
     color: "#ffffff",
-    cursor: "pointer",
     fontWeight: "900",
     fontSize: "15px",
     boxShadow:
-      "0 10px 25px rgba(37,99,235,0.2)",
+      "0 8px 20px rgba(37,99,235,0.18)",
   },
 
   success: {
     color: "#16a34a",
     fontWeight: "700",
     fontSize: "14px",
+  },
+
+  loadingStatus: {
+    marginTop: "15px",
+    color: "#64748b",
+    fontSize: "13px",
   },
 
   info: {
@@ -715,6 +759,7 @@ const styles = {
 
   infoTitle: {
     margin: "0 0 5px",
+    color: "#0f172a",
   },
 
   infoText: {
