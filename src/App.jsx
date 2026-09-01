@@ -7,7 +7,7 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Health from "./pages/Health";
-import Livechat from "./pages/livechat";
+import LiveChat from "./pages/LiveChat";
 import MentalHealth from "./pages/MentalHealth";
 import Psychologists from "./pages/Psychologists";
 import Mentors from "./pages/Mentors";
