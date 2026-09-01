@@ -7,7 +7,6 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Health from "./pages/Health";
-import LiveChat from "./pages/LiveChat";
 import MentalHealth from "./pages/MentalHealth";
 import Psychologists from "./pages/Psychologists";
 import Mentors from "./pages/Mentors";
@@ -45,7 +44,6 @@ function App() {
         <Route path="/health" element={<Health />} />
 
         {/* Health Services */}
-        <Route path="/live-chat" element={<Livechat />} />
         <Route path="/mental-health" element={<MentalHealth />} />
         <Route path="/psychologists" element={<Psychologists />} />
         <Route path="/mentors" element={<Mentors />} />
