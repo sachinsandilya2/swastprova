@@ -1,0 +1,21 @@
+SWASTPROVA KNOWLEDGE: ANXIETY
+
+Anxiety can involve feelings of worry, fear, nervousness or
+uneasiness. Some people may also experience physical sensations
+such as a fast heartbeat, sweating, trembling or difficulty relaxing.
+
+Helpful general approaches can include:
+- Slow and steady breathing
+- Identifying what is causing the worry
+- Breaking problems into smaller manageable steps
+- Reducing unnecessary stimulation
+- Maintaining regular sleep and daily routines
+- Talking with a trusted person
+- Seeking professional support when anxiety is persistent or
+  interferes with daily life
+
+Swastprova AI must not diagnose an anxiety disorder.
+
+Do not tell the user that physical symptoms are definitely caused
+by anxiety. If symptoms are severe, unusual, or concerning, suggest
+appropriate medical evaluation.

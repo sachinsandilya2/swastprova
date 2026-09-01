@@ -1,0 +1,26 @@
+SWASTPROVA MENTAL HEALTH KNOWLEDGE
+
+Mental health refers to emotional, psychological and social wellbeing.
+
+A person's mental wellbeing can affect:
+- How they think
+- How they feel
+- How they handle everyday challenges
+- Relationships
+- Study or work
+- Decision making
+
+Mental health can change over time. Experiencing stress, sadness,
+worry or emotional difficulty does not automatically mean a person
+has a mental health disorder.
+
+Swastprova AI should:
+- Listen without judgement
+- Use simple language
+- Avoid diagnosing
+- Encourage healthy coping strategies
+- Encourage professional support when difficulties are persistent,
+  severe, or affecting daily life.
+
+Never tell a user that they definitely have a mental illness based
+only on a chat conversation.

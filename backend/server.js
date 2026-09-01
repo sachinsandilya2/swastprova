@@ -1,25 +1,30 @@
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
-import { GoogleGenAI } from "@google/genai";
+import { askGemini } from "./gemini.js";
 
 dotenv.config();
 
 const app = express();
 
-/* ================= MIDDLEWARE ================= */
+/* =========================
+   MIDDLEWARE
+========================= */
 
 app.use(
   cors({
     origin: "*",
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "OPTIONS"],
   })
 );
 
 app.use(express.json());
 
-/* ================= ENV CHECK ================= */
+/* =========================
+   ENVIRONMENT CHECK
+========================= */
 
 if (!process.env.GEMINI_API_KEY) {
   console.error("❌ GEMINI_API_KEY is missing");
@@ -29,26 +34,27 @@ if (!process.env.GEMINI_API_KEY) {
 
 if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
   console.warn("⚠️ EMAIL_USER or EMAIL_PASS is missing");
+} else {
+  console.log("✅ Email configuration loaded");
 }
 
-/* ================= GEMINI SETUP ================= */
+/* =========================
+   OTP STORAGE
+========================= */
 
-const ai = process.env.GEMINI_API_KEY
-  ? new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    })
-  : null;
-
-/* ================= OTP STORAGE ================= */
-
-// Temporary OTP storage
 const loginOTPs = new Map();
 
-/* ================= HELPER FUNCTIONS ================= */
+/* =========================
+   OTP GENERATOR
+========================= */
 
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
+
+/* =========================
+   NODEMAILER TRANSPORTER
+========================= */
 
 const createTransporter = () => {
   return nodemailer.createTransport({
@@ -60,13 +66,17 @@ const createTransporter = () => {
   });
 };
 
-/* ================= HEALTH CHECK ================= */
+/* =========================
+   HOME ROUTE
+========================= */
 
 app.get("/", (req, res) => {
   res.status(200).send("🚀 Swastprova Backend Running...");
 });
 
-/* ================= SERVER HEALTH ================= */
+/* =========================
+   HEALTH CHECK
+========================= */
 
 app.get("/health", (req, res) => {
   res.status(200).json({
@@ -75,11 +85,9 @@ app.get("/health", (req, res) => {
   });
 });
 
-/* =========================================================
-   ================= LOGIN + OTP ===========================
-   ========================================================= */
-
-/* ================= LOGIN - SEND OTP ================= */
+/* =========================
+   LOGIN - SEND OTP
+========================= */
 
 app.post("/login", async (req, res) => {
   try {
@@ -101,13 +109,10 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    // Generate OTP
     const otp = generateOTP();
 
-    // OTP valid for 5 minutes
     const expiresAt = Date.now() + 5 * 60 * 1000;
 
-    // Store OTP
     loginOTPs.set(email.toLowerCase(), {
       otp,
       expiresAt,
@@ -126,68 +131,46 @@ app.post("/login", async (req, res) => {
       html: `
         <div style="
           font-family: Arial, sans-serif;
-          background: #f8fafc;
+          max-width: 600px;
+          margin: auto;
           padding: 30px;
+          border: 1px solid #ddd;
+          border-radius: 12px;
         ">
 
+          <h2 style="text-align:center;">
+            🩷 Swastprova
+          </h2>
+
+          <h3>Login Verification</h3>
+
+          <p>Your Swastprova login OTP is:</p>
+
           <div style="
-            max-width: 500px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            text-align: center;
+            margin: 25px 0;
           ">
-
-            <h2 style="
-              color: #2563eb;
-              margin-bottom: 10px;
-            ">
-              Swastprova
-            </h2>
-
-            <h3>
-              Login Verification
-            </h3>
-
-            <p>
-              Your login verification OTP is:
-            </p>
-
-            <div style="
-              font-size: 34px;
-              font-weight: bold;
-              letter-spacing: 8px;
-              color: #2563eb;
-              padding: 20px 0;
-            ">
-              ${otp}
-            </div>
-
-            <p>
-              This OTP is valid for
-              <strong>5 minutes</strong>.
-            </p>
-
-            <p style="
-              color: #64748b;
-              font-size: 14px;
-            ">
-              If you did not request this OTP,
-              please ignore this email.
-            </p>
-
-            <hr />
-
-            <p style="
-              color: #94a3b8;
-              font-size: 12px;
-            ">
-              Swastprova — Building a Healthier
-              & Stronger Future
-            </p>
-
+            ${otp}
           </div>
+
+          <p>
+            This OTP is valid for <strong>5 minutes</strong>.
+          </p>
+
+          <p>
+            If you did not request this OTP, please ignore this email.
+          </p>
+
+          <br />
+
+          <p>
+            Regards,<br />
+            <strong>Swastprova Team</strong>
+          </p>
+
         </div>
       `,
     });
@@ -198,7 +181,6 @@ app.post("/login", async (req, res) => {
       success: true,
       message: "OTP sent successfully",
     });
-
   } catch (error) {
     console.error("❌ LOGIN ERROR:", error);
     console.error("Error message:", error?.message);
@@ -210,7 +192,9 @@ app.post("/login", async (req, res) => {
   }
 });
 
-/* ================= VERIFY OTP ================= */
+/* =========================
+   VERIFY LOGIN OTP
+========================= */
 
 app.post("/login/verify-otp", async (req, res) => {
   try {
@@ -236,8 +220,6 @@ app.post("/login/verify-otp", async (req, res) => {
       });
     }
 
-    /* OTP EXPIRY */
-
     if (Date.now() > savedOTP.expiresAt) {
       loginOTPs.delete(key);
 
@@ -246,8 +228,6 @@ app.post("/login/verify-otp", async (req, res) => {
         message: "OTP expired. Please request a new OTP.",
       });
     }
-
-    /* OTP ATTEMPTS */
 
     if (savedOTP.attempts >= 5) {
       loginOTPs.delete(key);
@@ -258,8 +238,6 @@ app.post("/login/verify-otp", async (req, res) => {
       });
     }
 
-    /* WRONG OTP */
-
     if (savedOTP.otp !== otp.toString()) {
       savedOTP.attempts += 1;
 
@@ -268,8 +246,6 @@ app.post("/login/verify-otp", async (req, res) => {
         message: "Invalid OTP",
       });
     }
-
-    /* OTP CORRECT */
 
     loginOTPs.delete(key);
 
@@ -283,7 +259,6 @@ app.post("/login/verify-otp", async (req, res) => {
         email: email.toLowerCase(),
       },
     });
-
   } catch (error) {
     console.error("❌ OTP VERIFY ERROR:", error);
 
@@ -294,7 +269,9 @@ app.post("/login/verify-otp", async (req, res) => {
   }
 });
 
-/* ================= RESEND OTP ================= */
+/* =========================
+   RESEND LOGIN OTP
+========================= */
 
 app.post("/login/resend-otp", async (req, res) => {
   try {
@@ -329,34 +306,46 @@ app.post("/login/resend-otp", async (req, res) => {
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
+
       subject: "🔐 Swastprova New Login OTP",
 
       html: `
         <div style="
-          font-family: Arial;
+          font-family: Arial, sans-serif;
+          max-width: 600px;
+          margin: auto;
           padding: 30px;
+          border: 1px solid #ddd;
+          border-radius: 12px;
         ">
 
-          <h2 style="
-            color: #2563eb;
-          ">
-            Swastprova
+          <h2 style="text-align:center;">
+            🩷 Swastprova
           </h2>
 
-          <p>
-            Your new login OTP is:
-          </p>
+          <h3>New Login OTP</h3>
 
-          <h1 style="
-            color: #2563eb;
+          <p>Your new OTP is:</p>
+
+          <div style="
+            font-size: 32px;
+            font-weight: bold;
             letter-spacing: 8px;
+            text-align: center;
+            margin: 25px 0;
           ">
             ${otp}
-          </h1>
+          </div>
 
           <p>
-            This OTP is valid for
-            <strong>5 minutes</strong>.
+            This OTP is valid for <strong>5 minutes</strong>.
+          </p>
+
+          <br />
+
+          <p>
+            Regards,<br />
+            <strong>Swastprova Team</strong>
           </p>
 
         </div>
@@ -369,7 +358,6 @@ app.post("/login/resend-otp", async (req, res) => {
       success: true,
       message: "New OTP sent successfully",
     });
-
   } catch (error) {
     console.error("❌ RESEND OTP ERROR:", error);
 
@@ -380,9 +368,9 @@ app.post("/login/resend-otp", async (req, res) => {
   }
 });
 
-/* =========================================================
-   ================= CONTACT API ===========================
-   ========================================================= */
+/* =========================
+   CONTACT FORM
+========================= */
 
 app.post("/contact", async (req, res) => {
   try {
@@ -392,6 +380,13 @@ app.post("/contact", async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Missing fields",
+      });
+    }
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      return res.status(500).json({
+        success: false,
+        message: "Email service is not configured",
       });
     }
 
@@ -405,31 +400,40 @@ app.post("/contact", async (req, res) => {
       subject: `📩 New Message from ${name}`,
 
       html: `
-        <div style="font-family:Arial;padding:20px">
+        <div style="font-family: Arial, sans-serif;">
 
-          <h2>New Contact Message</h2>
+          <h2>📩 New Contact Message</h2>
 
           <p>
-            <b>Name:</b> ${name}
+            <strong>Name:</strong> ${name}
           </p>
 
           <p>
-            <b>Email:</b> ${email}
+            <strong>Email:</strong> ${email}
           </p>
 
           <p>
-            <b>Message:</b> ${message}
+            <strong>Message:</strong>
           </p>
+
+          <div style="
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+          ">
+            ${message}
+          </div>
 
         </div>
       `,
     });
 
+    console.log(`📩 Contact message received from ${email}`);
+
     return res.status(200).json({
       success: true,
       message: "Message sent successfully",
     });
-
   } catch (error) {
     console.error("❌ CONTACT ERROR:", error);
 
@@ -440,9 +444,9 @@ app.post("/contact", async (req, res) => {
   }
 });
 
-/* =========================================================
-   ================= MENTOR API ============================
-   ========================================================= */
+/* =========================
+   CONNECT MENTOR
+========================= */
 
 app.post("/connect-mentor", async (req, res) => {
   try {
@@ -455,6 +459,13 @@ app.post("/connect-mentor", async (req, res) => {
       });
     }
 
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      return res.status(500).json({
+        success: false,
+        message: "Email service is not configured",
+      });
+    }
+
     const transporter = createTransporter();
 
     await transporter.sendMail({
@@ -464,34 +475,34 @@ app.post("/connect-mentor", async (req, res) => {
       subject: "🎯 New Mentor Request",
 
       html: `
-        <div style="
-          font-family:Arial;
-          padding:20px;
-        ">
+        <div style="font-family: Arial, sans-serif;">
 
-          <h2>
-            Mentor Request
-          </h2>
+          <h2>🎯 New Mentor Request</h2>
 
           <p>
-            <b>Mentor:</b>
+            <strong>Mentor Name:</strong>
             ${mentorName}
           </p>
 
           <p>
-            <b>Field:</b>
+            <strong>Field:</strong>
             ${mentorField}
+          </p>
+
+          <p>
+            A new mentor connection request has been received.
           </p>
 
         </div>
       `,
     });
 
+    console.log(`🎯 Mentor request received: ${mentorName}`);
+
     return res.status(200).json({
       success: true,
       message: "Mentor request sent",
     });
-
   } catch (error) {
     console.error("❌ MENTOR ERROR:", error);
 
@@ -502,9 +513,9 @@ app.post("/connect-mentor", async (req, res) => {
   }
 });
 
-/* =========================================================
-   ================= AI CHAT ===============================
-   ========================================================= */
+/* =========================
+   GEMINI CHAT
+========================= */
 
 app.post("/chat", async (req, res) => {
   try {
@@ -530,48 +541,14 @@ app.post("/chat", async (req, res) => {
       });
     }
 
-    if (!ai) {
-      return res.status(500).json({
-        success: false,
-        message: "Gemini AI is not initialized",
-      });
-    }
+    console.log("🤖 Sending request to Gemini...");
 
-    const prompt = `
-You are Swastprova AI.
+    const reply = await askGemini(message);
 
-Rules:
-
-- Give helpful answers.
-- Use simple language.
-- Be supportive and motivational.
-- Do not make up facts.
-- Ask one useful reflection question when appropriate.
-- Give one practical action step when appropriate.
-
-User:
-${message}
-`;
-
-    console.log(
-      "🤖 Sending request to Gemini..."
-    );
-
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
-
-    console.log(
-      "✅ Gemini response received"
-    );
-
-    const reply = response.text;
+    console.log("✅ Gemini response received");
 
     if (!reply || !reply.trim()) {
-      console.error(
-        "❌ Empty AI response"
-      );
+      console.error("❌ Empty AI response");
 
       return res.status(500).json({
         success: false,
@@ -579,36 +556,17 @@ ${message}
       });
     }
 
-    console.log(
-      "🤖 AI REPLY:",
-      reply
-    );
+    console.log("🤖 AI REPLY:", reply);
 
     return res.status(200).json({
       success: true,
       reply: reply.trim(),
     });
-
   } catch (error) {
-    console.error(
-      "❌ AI ERROR:",
-      error
-    );
-
-    console.error(
-      "Error message:",
-      error?.message
-    );
-
-    console.error(
-      "Error status:",
-      error?.status
-    );
-
-    console.error(
-      "Error name:",
-      error?.name
-    );
+    console.error("❌ AI ERROR:", error);
+    console.error("Error message:", error?.message);
+    console.error("Error status:", error?.status);
+    console.error("Error name:", error?.name);
 
     return res.status(500).json({
       success: false,
@@ -617,19 +575,253 @@ ${message}
   }
 });
 
-/* =========================================================
-   ================= START SERVER ==========================
-   ========================================================= */
+/* =========================
+   BOOK APPOINTMENT
+========================= */
 
-const PORT =
-  process.env.PORT || 5000;
+app.post("/book-appointment", async (req, res) => {
+  try {
+    console.log("📅 BOOKING API HIT");
+
+    const {
+      customerName,
+      customerEmail,
+      customerPhone,
+      providerName,
+      providerRole,
+      providerEmail,
+      date,
+      time,
+      paymentMethod,
+      sessionFee,
+      message,
+    } = req.body;
+
+    console.log("📋 Booking data:", req.body);
+
+    /* ---------- VALIDATION ---------- */
+
+    if (
+      !customerName ||
+      !customerEmail ||
+      !customerPhone ||
+      !providerName ||
+      !providerEmail ||
+      !date ||
+      !time ||
+      !paymentMethod
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Required booking details are missing",
+      });
+    }
+
+    /* ---------- EMAIL CHECK ---------- */
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error("❌ Email service is not configured");
+
+      return res.status(500).json({
+        success: false,
+        message: "Email service is not configured",
+      });
+    }
+
+    /* ---------- CREATE TRANSPORTER ---------- */
+
+    const transporter = createTransporter();
+
+    /* ---------- ADMIN EMAIL ---------- */
+
+    const adminEmail =
+      process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+
+    /* ---------- ROLE ---------- */
+
+    const readableRole =
+      providerRole === "psychologist"
+        ? "Psychologist"
+        : "Mentor";
+
+    /* ---------- SEND EMAIL ---------- */
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+
+      to: [adminEmail, providerEmail],
+
+      replyTo: customerEmail,
+
+      subject:
+        `📅 New ${readableRole} Session Booking - ${providerName}`,
+
+      html: `
+        <div style="
+          font-family: Arial, sans-serif;
+          max-width: 700px;
+          margin: auto;
+          padding: 25px;
+          border: 1px solid #ddd;
+          border-radius: 12px;
+        ">
+
+          <h2 style="
+            text-align: center;
+            margin-bottom: 25px;
+          ">
+            📅 New ${readableRole} Session Booking
+          </h2>
+
+          <h3>👨‍⚕️ Provider Details</h3>
+
+          <p>
+            <strong>Name:</strong>
+            ${providerName}
+          </p>
+
+          <p>
+            <strong>Role:</strong>
+            ${readableRole}
+          </p>
+
+          <p>
+            <strong>Email:</strong>
+            ${providerEmail}
+          </p>
+
+          <hr />
+
+          <h3>👤 Customer Details</h3>
+
+          <p>
+            <strong>Name:</strong>
+            ${customerName}
+          </p>
+
+          <p>
+            <strong>Email:</strong>
+            ${customerEmail}
+          </p>
+
+          <p>
+            <strong>Phone:</strong>
+            ${customerPhone}
+          </p>
+
+          <hr />
+
+          <h3>🗓️ Session Details</h3>
+
+          <p>
+            <strong>Date:</strong>
+            ${date}
+          </p>
+
+          <p>
+            <strong>Time:</strong>
+            ${time}
+          </p>
+
+          <p>
+            <strong>Payment Method:</strong>
+            ${paymentMethod}
+          </p>
+
+          <p>
+            <strong>Session Fee:</strong>
+            ₹${sessionFee || "500"}
+          </p>
+
+          ${
+            message
+              ? `
+                <p>
+                  <strong>Customer Message:</strong>
+                </p>
+
+                <div style="
+                  padding: 15px;
+                  background: #f5f5f5;
+                  border-radius: 8px;
+                ">
+                  ${message}
+                </div>
+              `
+              : ""
+          }
+
+          <hr />
+
+          <p style="
+            text-align: center;
+            color: #666;
+          ">
+            This booking request was submitted through
+            <strong>Swastprova</strong>.
+          </p>
+
+        </div>
+      `,
+    });
+
+    console.log(
+      `📩 Booking email sent to admin and provider: ${providerEmail}`
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Booking request sent successfully",
+    });
+  } catch (error) {
+    console.error("❌ BOOKING ERROR:", error);
+    console.error("Error message:", error?.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send booking request",
+    });
+  }
+});
+
+/* =========================
+   404 HANDLER
+========================= */
+
+app.use((req, res) => {
+  console.log(`❌ ROUTE NOT FOUND: ${req.method} ${req.originalUrl}`);
+
+  return res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
+/* =========================
+   ERROR HANDLER
+========================= */
+
+app.use((error, req, res, next) => {
+  console.error("❌ SERVER ERROR:", error);
+
+  return res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  });
+});
+
+/* =========================
+   START SERVER
+========================= */
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(
-    `🚀 Swastprova Backend Running on port ${PORT}`
-  );
-
-  console.log(
-    `🌐 Port: ${PORT}`
-  );
+  console.log("====================================");
+  console.log("🚀 Swastprova Backend Running");
+  console.log(`🌐 Port: ${PORT}`);
+  console.log("📅 Booking API: /book-appointment");
+  console.log("💬 Chat API: /chat");
+  console.log("🔐 Login API: /login");
+  console.log("====================================");
 });

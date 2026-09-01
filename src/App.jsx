@@ -1,12 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// IMPORTANT: components hai, component nahi
+// Components
 import Navbar from "./components/Navbar";
 
+// Main Pages
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Health from "./pages/Health";
-import LiveChat from "./pages/LiveChat";
+import Livechat from "./pages/livechat";
 import MentalHealth from "./pages/MentalHealth";
 import Psychologists from "./pages/Psychologists";
 import Mentors from "./pages/Mentors";
@@ -14,8 +15,20 @@ import Progress from "./pages/Progress";
 import Articles from "./pages/Articles";
 import Community from "./pages/Community";
 import Contact from "./pages/Contact";
+
+// Authentication
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+
+// Provider Registration
+import MentorRegister from "./pages/MentorRegister";
+import PsychologistRegister from "./pages/PsychologistRegister";
+
+// Booking
+import BookSession from "./pages/BookSession";
+
+// Admin
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -32,7 +45,7 @@ function App() {
         <Route path="/health" element={<Health />} />
 
         {/* Health Services */}
-        <Route path="/live-chat" element={<LiveChat />} />
+        <Route path="/live-chat" element={<Livechat />} />
         <Route path="/mental-health" element={<MentalHealth />} />
         <Route path="/psychologists" element={<Psychologists />} />
         <Route path="/mentors" element={<Mentors />} />
@@ -46,6 +59,29 @@ function App() {
         {/* Authentication */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        {/* Provider Registration */}
+        <Route
+          path="/mentor-register"
+          element={<MentorRegister />}
+        />
+
+        <Route
+          path="/psychologist-register"
+          element={<PsychologistRegister />}
+        />
+
+        {/* Book Session */}
+        <Route
+          path="/book-session"
+          element={<BookSession />}
+        />
+
+        {/* Admin Dashboard */}
+        <Route
+          path="/admin-dashboard"
+          element={<AdminDashboard />}
+        />
 
       </Routes>
 

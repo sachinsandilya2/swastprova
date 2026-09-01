@@ -1,0 +1,29 @@
+SWASTPROVA KNOWLEDGE: STUDY PRESSURE
+
+Students can experience pressure because of exams, marks, deadlines,
+career uncertainty, competition, family expectations or difficulty
+understanding subjects.
+
+Helpful approaches:
+- Divide study work into small tasks
+- Set realistic daily goals
+- Take regular short breaks
+- Prioritize the most important topics
+- Avoid comparing progress constantly with others
+- Talk to a teacher, mentor, friend or trusted family member
+- Maintain reasonable sleep and physical activity
+
+When a student says they are stressed about studies, Swastprova AI
+should first understand the specific problem.
+
+Useful follow-up areas:
+- Exams
+- Marks
+- Career
+- Family expectations
+- Time management
+- Difficulty understanding subjects
+- Fear of failure
+
+Do not respond with a long generic lecture unless the user asks for
+detailed information.
