@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Components
@@ -10,7 +11,7 @@ import Health from "./pages/Health";
 import MentalHealth from "./pages/MentalHealth";
 import Psychologists from "./pages/Psychologists";
 import Mentors from "./pages/Mentors";
-import LiveChat from "./pages/livechat";
+import LiveChat from "./pages/LiveChat";
 import Progress from "./pages/Progress";
 import Articles from "./pages/Articles";
 import Community from "./pages/Community";
@@ -33,39 +34,91 @@ import BookSession from "./pages/BookSession";
 // Admin
 import AdminDashboard from "./pages/AdminDashboard";
 
+
 function App() {
   return (
     <BrowserRouter>
+
       {/* Navbar */}
       <Navbar />
 
       <Routes>
-        {/* Main Pages */}
+
+        {/* ================= MAIN PAGES ================= */}
+
         <Route path="/" element={<Home />} />
+
         <Route path="/about" element={<About />} />
-        <Route path="/livechat" element={<LiveChat />} />
+
         <Route path="/health" element={<Health />} />
 
-        {/* Health Services */}
-        <Route path="/mental-health" element={<MentalHealth />} />
+        <Route
+          path="/mental-health"
+          element={<MentalHealth />}
+        />
 
-        {/* AI Mental Health Assessment */}
-        <Route path="/assessment" element={<Assessment />} />
+        <Route
+          path="/psychologists"
+          element={<Psychologists />}
+        />
 
-        <Route path="/psychologists" element={<Psychologists />} />
-        <Route path="/mentors" element={<Mentors />} />
-        <Route path="/progress" element={<Progress />} />
+        <Route
+          path="/mentors"
+          element={<Mentors />}
+        />
 
-        {/* Community */}
-        <Route path="/articles" element={<Articles />} />
-        <Route path="/community" element={<Community />} />
-        <Route path="/contact" element={<Contact />} />
+        {/* ================= LIVE CHAT ================= */}
 
-        {/* Authentication */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/livechat"
+          element={<LiveChat />}
+        />
 
-        {/* Provider Registration */}
+        {/* ================= AI ASSESSMENT ================= */}
+
+        <Route
+          path="/assessment"
+          element={<Assessment />}
+        />
+
+        {/* ================= PROGRESS ================= */}
+
+        <Route
+          path="/progress"
+          element={<Progress />}
+        />
+
+        {/* ================= COMMUNITY ================= */}
+
+        <Route
+          path="/articles"
+          element={<Articles />}
+        />
+
+        <Route
+          path="/community"
+          element={<Community />}
+        />
+
+        <Route
+          path="/contact"
+          element={<Contact />}
+        />
+
+        {/* ================= AUTHENTICATION ================= */}
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        {/* ================= PROVIDER REGISTRATION ================= */}
+
         <Route
           path="/mentor-register"
           element={<MentorRegister />}
@@ -76,20 +129,25 @@ function App() {
           element={<PsychologistRegister />}
         />
 
-        {/* Book Session */}
+        {/* ================= BOOKING ================= */}
+
         <Route
           path="/book-session"
           element={<BookSession />}
         />
 
-        {/* Admin Dashboard */}
+        {/* ================= ADMIN ================= */}
+
         <Route
           path="/admin-dashboard"
           element={<AdminDashboard />}
         />
+
       </Routes>
+
     </BrowserRouter>
   );
 }
 
 export default App;
+
