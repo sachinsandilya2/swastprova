@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 
 export default function Health() {
@@ -8,7 +9,7 @@ export default function Health() {
       icon: "🧭",
       title: "Life Compass AI",
       desc: "AI-powered reflection, guidance and personal support.",
-      path: "/live-chat",
+      path: "/livechat",
       tag: "AI",
     },
     {
@@ -94,7 +95,7 @@ export default function Health() {
 
           <button
             style={styles.primaryBtn}
-            onClick={() => navigate("/live-chat")}
+            onClick={() => navigate("/livechat")}
           >
             🧭 Start with AI
             <span style={styles.arrow}>→</span>
@@ -117,7 +118,8 @@ export default function Health() {
       <section style={styles.infoSection}>
 
         <div style={styles.infoCard}>
-          <span>🧠</span>
+          <span style={styles.infoCardIcon}>🧠</span>
+
           <div>
             <strong>Mental Wellness</strong>
             <small>Understand yourself</small>
@@ -125,7 +127,8 @@ export default function Health() {
         </div>
 
         <div style={styles.infoCard}>
-          <span>🎯</span>
+          <span style={styles.infoCardIcon}>🎯</span>
+
           <div>
             <strong>Personal Growth</strong>
             <small>Build better habits</small>
@@ -133,7 +136,8 @@ export default function Health() {
         </div>
 
         <div style={styles.infoCard}>
-          <span>🤝</span>
+          <span style={styles.infoCardIcon}>🤝</span>
+
           <div>
             <strong>Human Support</strong>
             <small>Connect with people</small>
@@ -176,39 +180,45 @@ export default function Health() {
               key={index}
               style={styles.card}
               onClick={() => navigate(item.path)}
+
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform =
                   "translateY(-8px)";
+
                 e.currentTarget.style.boxShadow =
                   "0 25px 50px rgba(15,23,42,0.12)";
+
                 e.currentTarget.style.borderColor =
                   "#bfdbfe";
               }}
+
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform =
                   "translateY(0)";
+
                 e.currentTarget.style.boxShadow =
                   "0 10px 30px rgba(15,23,42,0.06)";
+
                 e.currentTarget.style.borderColor =
                   "#e2e8f0";
               }}
             >
 
-              {/* Tag */}
+              {/* TAG */}
 
               <div style={styles.tag}>
                 {item.tag}
               </div>
 
 
-              {/* Icon */}
+              {/* ICON */}
 
               <div style={styles.icon}>
                 {item.icon}
               </div>
 
 
-              {/* Content */}
+              {/* CONTENT */}
 
               <h3 style={styles.cardTitle}>
                 {item.title}
@@ -219,7 +229,7 @@ export default function Health() {
               </p>
 
 
-              {/* Explore */}
+              {/* EXPLORE */}
 
               <button
                 style={styles.btn}
@@ -262,7 +272,7 @@ export default function Health() {
 
           <button
             style={styles.ctaButton}
-            onClick={() => navigate("/live-chat")}
+            onClick={() => navigate("/livechat")}
           >
             Talk to Life Compass AI →
           </button>
@@ -291,6 +301,8 @@ export default function Health() {
 ===================================================== */
 
 const styles = {
+
+  /* ================= PAGE ================= */
 
   page: {
     minHeight: "100vh",
@@ -634,3 +646,4 @@ const styles = {
   },
 
 };
+

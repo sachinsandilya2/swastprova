@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.png";
 
@@ -20,13 +21,18 @@ const Navbar = () => {
           <Link to="/mentors">Mentors</Link>
 
           {/* LIVE CHAT */}
-          <Link to="/live-chat" className="live-chat-link">
+          <Link to="/livechat" className="live-chat-link">
             💬 Live Chat
           </Link>
 
           {/* LOGIN */}
           <Link to="/login" className="login-link">
             Login
+          </Link>
+
+          {/* REGISTER */}
+          <Link to="/register" className="register-link">
+            Register
           </Link>
         </div>
 
@@ -84,7 +90,7 @@ const Navbar = () => {
         .navbar-links {
           display: flex;
           align-items: center;
-          gap: 22px;
+          gap: 18px;
         }
 
         .navbar-links a {
@@ -137,7 +143,7 @@ const Navbar = () => {
         /* ================= LOGIN ================= */
 
         .login-link {
-          padding: 8px 14px;
+          padding: 8px 13px;
           border: 1px solid #cbd5e1;
           border-radius: 10px;
           color: #0f172a !important;
@@ -152,6 +158,32 @@ const Navbar = () => {
           background: #f1f5f9;
           border-color: #2563eb;
           color: #2563eb !important;
+        }
+
+        /* ================= REGISTER ================= */
+
+        .register-link {
+          padding: 8px 14px;
+          border-radius: 10px;
+
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+
+          color: #2563eb !important;
+          font-weight: 800 !important;
+
+          transition: all 0.25s ease !important;
+        }
+
+        .register-link::after {
+          display: none;
+        }
+
+        .register-link:hover {
+          background: #2563eb;
+          border-color: #2563eb;
+          color: white !important;
+          transform: translateY(-1px);
         }
 
         /* ================= GET SUPPORT ================= */
@@ -198,18 +230,22 @@ const Navbar = () => {
           }
 
           .navbar-links {
-            gap: 14px;
+            gap: 12px;
           }
 
           .navbar-links a {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
+          }
+
+          .login-link,
+          .register-link {
+            padding: 7px 10px;
           }
 
           .navbar-button {
             padding: 9px 13px;
             font-size: 0.78rem;
           }
-
         }
 
         @media (max-width: 800px) {
@@ -231,7 +267,6 @@ const Navbar = () => {
             width: 36px;
             height: 36px;
           }
-
         }
       `}</style>
     </nav>
@@ -239,3 +274,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

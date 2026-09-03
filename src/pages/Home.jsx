@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -112,6 +113,7 @@ export default function Home() {
 
           <div style={styles.badge}>
             <span style={styles.badgeDot}></span>
+
             <span>
               AI-Powered Health & Personal Growth
             </span>
@@ -122,7 +124,9 @@ export default function Home() {
           </div>
 
           <h1 style={styles.title}>
+
             <span>Your Mind.</span>
+
             <br />
 
             <span style={styles.gradientText}>
@@ -132,6 +136,7 @@ export default function Home() {
             <br />
 
             <span>Your Future.</span>
+
           </h1>
 
           <p style={styles.subtitle}>
@@ -148,12 +153,17 @@ export default function Home() {
 
           <div style={styles.buttonContainer}>
 
+            {/* ASSESSMENT BUTTON */}
+
             <button
               style={styles.primaryBtn}
-              onClick={() => navigate("/live-chat")}
+              onClick={() => navigate("/assessment")}
             >
-              🧭 Life Compass AI
-              <span style={styles.arrow}>→</span>
+              🧠 Stress & Trauma Assessment
+
+              <span style={styles.arrow}>
+                →
+              </span>
             </button>
 
             <button
@@ -198,6 +208,7 @@ export default function Home() {
               </span>
 
             </div>
+
           </div>
 
           {/* CARD 1 */}
@@ -208,12 +219,14 @@ export default function Home() {
               ...styles.cardTop,
             }}
           >
+
             <span>🧠</span>
 
             <div style={styles.cardContent}>
               <strong>Mental Wellness</strong>
               <small>Understand your mind</small>
             </div>
+
           </div>
 
           {/* CARD 2 */}
@@ -224,12 +237,14 @@ export default function Home() {
               ...styles.cardRight,
             }}
           >
+
             <span>🤖</span>
 
             <div style={styles.cardContent}>
               <strong>AI Guidance</strong>
               <small>Reflect & grow</small>
             </div>
+
           </div>
 
           {/* CARD 3 */}
@@ -240,12 +255,14 @@ export default function Home() {
               ...styles.cardBottom,
             }}
           >
+
             <span>🎯</span>
 
             <div style={styles.cardContent}>
               <strong>Personal Growth</strong>
               <small>Build your future</small>
             </div>
+
           </div>
 
         </div>
@@ -263,9 +280,9 @@ export default function Home() {
           </span>
 
           <h2 style={styles.sectionTitle}>
-            Everything you need to{" "}
+            Everything you need{" "}
             <span style={styles.blueText}>
-              move forward.
+              to move forward.
             </span>
           </h2>
 
@@ -278,12 +295,25 @@ export default function Home() {
 
         <div style={styles.featuresGrid}>
 
+          {/* FIXED ROUTE: /livechat */}
+
           <FeatureCard
             icon="🧭"
             title="Life Compass AI"
             description="Talk with Swastprova AI, reflect on your thoughts and get practical guidance."
-            onClick={() => navigate("/live-chat")}
+            onClick={() => navigate("/livechat")}
           />
+
+          {/* ASSESSMENT */}
+
+          <FeatureCard
+            icon="🧠"
+            title="AI Stress & Trauma Assessment"
+            description="Get an AI-assisted assessment of possible stress and trauma indicators from your current interaction."
+            onClick={() => navigate("/assessment")}
+          />
+
+          {/* MENTAL HEALTH */}
 
           <FeatureCard
             icon="🧠"
@@ -292,12 +322,16 @@ export default function Home() {
             onClick={() => navigate("/mental-health")}
           />
 
+          {/* PROFESSIONAL SUPPORT */}
+
           <FeatureCard
             icon="👨‍⚕️"
             title="Professional Support"
             description="Explore psychologists and find the right support for your needs."
             onClick={() => navigate("/psychologists")}
           />
+
+          {/* MENTORSHIP */}
 
           <FeatureCard
             icon="🎓"
@@ -357,9 +391,9 @@ export default function Home() {
 
           <button
             style={styles.ctaButton}
-            onClick={() => navigate("/live-chat")}
+            onClick={() => navigate("/assessment")}
           >
-            Start with Life Compass AI →
+            Start with AI Stress Assessment →
           </button>
 
         </div>
@@ -515,6 +549,7 @@ const styles = {
     outline: "none",
     fontSize: "15px",
     background: "#f8fafc",
+    boxSizing: "border-box",
   },
 
   adminError: {
@@ -945,8 +980,4 @@ const styles = {
     fontWeight: "800",
     maxWidth: "100%",
   },
-
-  /* ================= MOBILE OVERRIDE ================= */
-
-  /* These properties are handled using CSS below */
 };

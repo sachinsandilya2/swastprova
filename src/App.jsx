@@ -10,10 +10,14 @@ import Health from "./pages/Health";
 import MentalHealth from "./pages/MentalHealth";
 import Psychologists from "./pages/Psychologists";
 import Mentors from "./pages/Mentors";
+import LiveChat from "./pages/livechat";
 import Progress from "./pages/Progress";
 import Articles from "./pages/Articles";
 import Community from "./pages/Community";
 import Contact from "./pages/Contact";
+
+// AI Mental Health Assessment
+import Assessment from "./pages/Assessment";
 
 // Authentication
 import Login from "./pages/Login";
@@ -32,19 +36,22 @@ import AdminDashboard from "./pages/AdminDashboard";
 function App() {
   return (
     <BrowserRouter>
-
       {/* Navbar */}
       <Navbar />
 
       <Routes>
-
         {/* Main Pages */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
+        <Route path="/livechat" element={<LiveChat />} />
         <Route path="/health" element={<Health />} />
 
         {/* Health Services */}
         <Route path="/mental-health" element={<MentalHealth />} />
+
+        {/* AI Mental Health Assessment */}
+        <Route path="/assessment" element={<Assessment />} />
+
         <Route path="/psychologists" element={<Psychologists />} />
         <Route path="/mentors" element={<Mentors />} />
         <Route path="/progress" element={<Progress />} />
@@ -80,9 +87,7 @@ function App() {
           path="/admin-dashboard"
           element={<AdminDashboard />}
         />
-
       </Routes>
-
     </BrowserRouter>
   );
 }

@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 import { GoogleGenAI } from "@google/genai";
 
@@ -6,7 +7,7 @@ import { GoogleGenAI } from "@google/genai";
 // ==========================================
 
 if (!process.env.GEMINI_API_KEY) {
-  console.error("❌ GEMINI_API_KEY is missing in .env");
+  console.error("❌ GEMINI_API_KEY is missing");
 }
 
 const ai = process.env.GEMINI_API_KEY
@@ -143,12 +144,20 @@ Your job is to provide the MOST RELEVANT and SUPPORTIVE answer.
 
 export async function askGemini(message) {
 
-  // Check API
+  // ========================================
+  // CHECK GEMINI CLIENT
+  // ========================================
+
   if (!ai) {
+    console.error("❌ Gemini AI client is not initialized");
     throw new Error("Gemini API key is not configured");
   }
 
-  // Validate message
+
+  // ========================================
+  // VALIDATE MESSAGE
+  // ========================================
+
   if (!message || typeof message !== "string") {
     throw new Error("Message is required");
   }
@@ -159,14 +168,26 @@ export async function askGemini(message) {
     throw new Error("Message is empty");
   }
 
+
+  // ========================================
+  // SEND REQUEST TO GEMINI
+  // ========================================
+
   try {
 
+    console.log("🤖 Sending request to Gemini...");
+    console.log("📝 User message length:", userMessage.length);
+
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite",
+      
+      // IMPORTANT:
+      // Updated Gemini model
+      model: "gemini-3.5-flash-lite",
 
       contents: [
         {
           role: "user",
+
           parts: [
             {
               text: `${SYSTEM_PROMPT}
@@ -184,18 +205,79 @@ ${userMessage}`,
       },
     });
 
-    const reply = response.text?.trim();
+
+    // ========================================
+    // EXTRACT RESPONSE
+    // ========================================
+
+    const reply = response?.text?.trim();
+
+
+    // ========================================
+    // EMPTY RESPONSE CHECK
+    // ========================================
 
     if (!reply) {
-      throw new Error("Gemini returned an empty response");
+
+      console.error(
+        "❌ Gemini returned an empty response"
+      );
+
+      throw new Error(
+        "Gemini returned an empty response"
+      );
     }
+
+
+    console.log("✅ Gemini response received");
+    console.log(
+      "💬 Reply length:",
+      reply.length
+    );
 
     return reply;
 
+
   } catch (error) {
 
-    console.error("❌ Gemini Error:", error?.message || error);
+    // ========================================
+    // DETAILED ERROR LOG
+    // ========================================
 
-    throw new Error("Gemini request failed");
+    console.error("======================================");
+    console.error("❌ GEMINI API ERROR");
+    console.error("======================================");
+
+    console.error(
+      "Message:",
+      error?.message || "Unknown error"
+    );
+
+    console.error(
+      "Status:",
+      error?.status || "No status"
+    );
+
+    console.error(
+      "Code:",
+      error?.code || "No code"
+    );
+
+    console.error(
+      "Name:",
+      error?.name || "No name"
+    );
+
+    console.error(
+      "Details:",
+      error
+    );
+
+    console.error("======================================");
+
+
+    // Keep original error
+    // so Render Logs show the real reason.
+    throw error;
   }
 }

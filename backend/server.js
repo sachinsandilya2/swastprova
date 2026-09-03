@@ -1,11 +1,17 @@
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
+
 import { askGemini } from "./gemini.js";
+import { analyzeAssessment } from "./services/assessmentAI.js";
+import { calculateSVI } from "./services/sviEngine.js";
 
 dotenv.config();
+
+/* =========================
+   APP CONFIGURATION
+========================= */
 
 const app = express();
 
@@ -59,6 +65,7 @@ const generateOTP = () => {
 const createTransporter = () => {
   return nodemailer.createTransport({
     service: "gmail",
+
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -125,7 +132,9 @@ app.post("/login", async (req, res) => {
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
+
       to: email,
+
       subject: "🔐 Swastprova Login Verification OTP",
 
       html: `
@@ -305,6 +314,7 @@ app.post("/login/resend-otp", async (req, res) => {
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
+
       to: email,
 
       subject: "🔐 Swastprova New Login OTP",
@@ -394,7 +404,9 @@ app.post("/contact", async (req, res) => {
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
+
       replyTo: email,
+
       to: process.env.EMAIL_USER,
 
       subject: `📩 New Message from ${name}`,
@@ -470,6 +482,7 @@ app.post("/connect-mentor", async (req, res) => {
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
+
       to: process.env.EMAIL_USER,
 
       subject: "🎯 New Mentor Request",
@@ -497,7 +510,9 @@ app.post("/connect-mentor", async (req, res) => {
       `,
     });
 
-    console.log(`🎯 Mentor request received: ${mentorName}`);
+    console.log(
+      `🎯 Mentor request received: ${mentorName}`
+    );
 
     return res.status(200).json({
       success: true,
@@ -514,23 +529,37 @@ app.post("/connect-mentor", async (req, res) => {
 });
 
 /* =========================
-   GEMINI CHAT
+   AI STRESS & TRAUMA ASSESSMENT
 ========================= */
 
-app.post("/chat", async (req, res) => {
+app.post("/assessment/analyze", async (req, res) => {
   try {
-    console.log("🔥 CHAT HIT");
+    console.log("🧠 ASSESSMENT API HIT");
 
-    const { message } = req.body;
+    const {
+      text = "",
+      answers = {},
+    } = req.body;
 
-    console.log("📝 User message:", message);
+    /* ---------- VALIDATION ---------- */
 
-    if (!message || typeof message !== "string") {
+    const hasText =
+      typeof text === "string" &&
+      text.trim().length > 0;
+
+    const hasAnswers =
+      answers &&
+      typeof answers === "object" &&
+      Object.keys(answers).length > 0;
+
+    if (!hasText && !hasAnswers) {
       return res.status(400).json({
         success: false,
-        message: "Message required",
+        message: "Assessment information is required",
       });
     }
+
+    /* ---------- GEMINI API CHECK ---------- */
 
     if (!process.env.GEMINI_API_KEY) {
       console.error("❌ Gemini API key missing");
@@ -541,32 +570,168 @@ app.post("/chat", async (req, res) => {
       });
     }
 
-    console.log("🤖 Sending request to Gemini...");
+    /* ---------- AI ANALYSIS ---------- */
 
-    const reply = await askGemini(message);
+    console.log("🤖 Running assessment AI...");
 
-    console.log("✅ Gemini response received");
+    const aiResult = await analyzeAssessment({
+      text,
+      answers,
+    });
 
-    if (!reply || !reply.trim()) {
-      console.error("❌ Empty AI response");
+    console.log(
+      "✅ Assessment AI analysis received"
+    );
 
-      return res.status(500).json({
+    /* ---------- SVI CALCULATION ---------- */
+
+    const sviResult = calculateSVI(aiResult);
+
+    console.log(
+      "📊 SVI SCORE:",
+      sviResult.sviScore
+    );
+
+    console.log(
+      "⚠️ RISK LEVEL:",
+      sviResult.riskLevel
+    );
+
+    /* ---------- RESPONSE ---------- */
+
+    return res.status(200).json({
+      success: true,
+
+      assessment: {
+        indicators:
+          aiResult.indicators || [],
+
+        confidence:
+          typeof aiResult.confidence === "number"
+            ? aiResult.confidence
+            : 0,
+
+        recommendedSupport:
+          aiResult.recommendedSupport || [],
+      },
+
+      sviScore:
+        sviResult.sviScore,
+
+      riskLevel:
+        sviResult.riskLevel,
+    });
+
+  } catch (error) {
+    console.error(
+      "❌ ASSESSMENT ERROR:",
+      error
+    );
+
+    console.error(
+      "Error message:",
+      error?.message || error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Assessment analysis failed",
+    });
+  }
+});
+
+/* =========================
+   GEMINI CHAT
+========================= */
+
+app.post("/chat", async (req, res) => {
+  try {
+    console.log("🔥 CHAT HIT");
+
+    const { message } = req.body;
+
+    console.log(
+      "📝 User message:",
+      message
+    );
+
+    if (
+      !message ||
+      typeof message !== "string"
+    ) {
+      return res.status(400).json({
         success: false,
-        message: "AI returned an empty response",
+        message: "Message required",
       });
     }
 
-    console.log("🤖 AI REPLY:", reply);
+    if (!process.env.GEMINI_API_KEY) {
+      console.error(
+        "❌ Gemini API key missing"
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Gemini API key is not configured",
+      });
+    }
+
+    console.log(
+      "🤖 Sending request to Gemini..."
+    );
+
+    const reply = await askGemini(message);
+
+    console.log(
+      "✅ Gemini response received"
+    );
+
+    if (
+      !reply ||
+      !reply.trim()
+    ) {
+      console.error(
+        "❌ Empty AI response"
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "AI returned an empty response",
+      });
+    }
+
+    console.log(
+      "🤖 AI REPLY:",
+      reply
+    );
 
     return res.status(200).json({
       success: true,
       reply: reply.trim(),
     });
+
   } catch (error) {
-    console.error("❌ AI ERROR:", error);
-    console.error("Error message:", error?.message);
-    console.error("Error status:", error?.status);
-    console.error("Error name:", error?.name);
+    console.error(
+      "❌ AI ERROR:",
+      error
+    );
+
+    console.error(
+      "Error message:",
+      error?.message
+    );
+
+    console.error(
+      "Error status:",
+      error?.status
+    );
+
+    console.error(
+      "Error name:",
+      error?.name
+    );
 
     return res.status(500).json({
       success: false,
@@ -597,7 +762,10 @@ app.post("/book-appointment", async (req, res) => {
       message,
     } = req.body;
 
-    console.log("📋 Booking data:", req.body);
+    console.log(
+      "📋 Booking data:",
+      req.body
+    );
 
     /* ---------- VALIDATION ---------- */
 
@@ -613,29 +781,38 @@ app.post("/book-appointment", async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Required booking details are missing",
+        message:
+          "Required booking details are missing",
       });
     }
 
     /* ---------- EMAIL CHECK ---------- */
 
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error("❌ Email service is not configured");
+    if (
+      !process.env.EMAIL_USER ||
+      !process.env.EMAIL_PASS
+    ) {
+      console.error(
+        "❌ Email service is not configured"
+      );
 
       return res.status(500).json({
         success: false,
-        message: "Email service is not configured",
+        message:
+          "Email service is not configured",
       });
     }
 
     /* ---------- CREATE TRANSPORTER ---------- */
 
-    const transporter = createTransporter();
+    const transporter =
+      createTransporter();
 
     /* ---------- ADMIN EMAIL ---------- */
 
     const adminEmail =
-      process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+      process.env.ADMIN_EMAIL ||
+      process.env.EMAIL_USER;
 
     /* ---------- ROLE ---------- */
 
@@ -649,7 +826,10 @@ app.post("/book-appointment", async (req, res) => {
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
 
-      to: [adminEmail, providerEmail],
+      to: [
+        adminEmail,
+        providerEmail,
+      ],
 
       replyTo: customerEmail,
 
@@ -771,15 +951,25 @@ app.post("/book-appointment", async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Booking request sent successfully",
+      message:
+        "Booking request sent successfully",
     });
+
   } catch (error) {
-    console.error("❌ BOOKING ERROR:", error);
-    console.error("Error message:", error?.message);
+    console.error(
+      "❌ BOOKING ERROR:",
+      error
+    );
+
+    console.error(
+      "Error message:",
+      error?.message
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Failed to send booking request",
+      message:
+        "Failed to send booking request",
     });
   }
 });
@@ -789,11 +979,14 @@ app.post("/book-appointment", async (req, res) => {
 ========================= */
 
 app.use((req, res) => {
-  console.log(`❌ ROUTE NOT FOUND: ${req.method} ${req.originalUrl}`);
+  console.log(
+    `❌ ROUTE NOT FOUND: ${req.method} ${req.originalUrl}`
+  );
 
   return res.status(404).json({
     success: false,
-    message: `Route not found: ${req.method} ${req.originalUrl}`,
+    message:
+      `Route not found: ${req.method} ${req.originalUrl}`,
   });
 });
 
@@ -801,27 +994,58 @@ app.use((req, res) => {
    ERROR HANDLER
 ========================= */
 
-app.use((error, req, res, next) => {
-  console.error("❌ SERVER ERROR:", error);
+app.use(
+  (error, req, res, next) => {
+    console.error(
+      "❌ SERVER ERROR:",
+      error
+    );
 
-  return res.status(500).json({
-    success: false,
-    message: "Internal server error",
-  });
-});
+    return res.status(500).json({
+      success: false,
+      message:
+        "Internal server error",
+    });
+  }
+);
 
 /* =========================
    START SERVER
 ========================= */
 
-const PORT = process.env.PORT || 5000;
+const PORT =
+  process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log("====================================");
-  console.log("🚀 Swastprova Backend Running");
-  console.log(`🌐 Port: ${PORT}`);
-  console.log("📅 Booking API: /book-appointment");
-  console.log("💬 Chat API: /chat");
-  console.log("🔐 Login API: /login");
-  console.log("====================================");
+  console.log(
+    "===================================="
+  );
+
+  console.log(
+    "🚀 Swastprova Backend Running"
+  );
+
+  console.log(
+    `🌐 Port: ${PORT}`
+  );
+
+  console.log(
+    "📅 Booking API: /book-appointment"
+  );
+
+  console.log(
+    "💬 Chat API: /chat"
+  );
+
+  console.log(
+    "🧠 Assessment API: /assessment/analyze"
+  );
+
+  console.log(
+    "🔐 Login API: /login"
+  );
+
+  console.log(
+    "===================================="
+  );
 });
