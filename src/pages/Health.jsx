@@ -9,7 +9,7 @@ export default function Health() {
       icon: "🧭",
       title: "Life Compass AI",
       desc: "AI-powered reflection, guidance and personal support.",
-      path: "/livechat",
+      path: "/liveChat",
       tag: "AI",
     },
     {
@@ -95,7 +95,7 @@ export default function Health() {
 
           <button
             style={styles.primaryBtn}
-            onClick={() => navigate("/livechat")}
+            onClick={() => navigate("/liveChat")}
           >
             🧭 Start with AI
             <span style={styles.arrow}>→</span>
@@ -272,7 +272,7 @@ export default function Health() {
 
           <button
             style={styles.ctaButton}
-            onClick={() => navigate("/livechat")}
+            onClick={() => navigate("/liveChat")}
           >
             Talk to Life Compass AI →
           </button>

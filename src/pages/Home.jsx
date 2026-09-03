@@ -295,13 +295,13 @@ export default function Home() {
 
         <div style={styles.featuresGrid}>
 
-          {/* FIXED ROUTE: /livechat */}
+          {/* FIXED ROUTE: /liveChat */}
 
           <FeatureCard
             icon="🧭"
             title="Life Compass AI"
             description="Talk with Swastprova AI, reflect on your thoughts and get practical guidance."
-            onClick={() => navigate("/livechat")}
+            onClick={() => navigate("/liveChat")}
           />
 
           {/* ASSESSMENT */}
