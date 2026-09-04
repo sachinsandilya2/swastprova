@@ -21,7 +21,7 @@ const Navbar = () => {
           <Link to="/mentors">Mentors</Link>
 
           {/* LIVE CHAT */}
-          <Link to="/livechat" className="live-chat-link">
+          <Link to="/liveChat" className="live-chat-link">
             💬 Live Chat
           </Link>
 

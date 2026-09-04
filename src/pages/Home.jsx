@@ -295,7 +295,7 @@ export default function Home() {
 
         <div style={styles.featuresGrid}>
 
-          {/* FIXED ROUTE: /livechat */}
+          {/* FIXED ROUTE: /liveChat */}
 
           <FeatureCard
             icon="🧭"
