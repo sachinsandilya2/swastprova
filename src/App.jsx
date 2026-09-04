@@ -69,7 +69,7 @@ function App() {
 
         {/* ================= LIVE CHAT ================= */}
          <Route 
-          path="/livechat" 
+          path="/liveChat" 
           element={<LiveChat />} 
         />
 
