@@ -68,10 +68,9 @@ function App() {
         />
 
         {/* ================= LIVE CHAT ================= */}
-
-        <Route
-          path="/liveChat"
-          element={<LiveChat />}
+         <Route 
+          path="/livechat" 
+          element={<LiveChat />} 
         />
 
         {/* ================= AI ASSESSMENT ================= */}
