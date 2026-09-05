@@ -1,19 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-  sendEmailVerification,
-} from "firebase/auth";
-
-import {
-  doc,
-  setDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-
-import { auth, db } from "../firebase";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://swastprova-2.onrender.com";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -25,14 +15,11 @@ const Register = () => {
     confirmPassword: "",
   });
 
-  const [showPassword, setShowPassword] =
-    useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState(false);
 
   const [loading, setLoading] = useState(false);
-
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -41,10 +28,12 @@ const Register = () => {
   // =========================
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
     setError("");
     setMessage("");
@@ -67,12 +56,19 @@ const Register = () => {
       confirmPassword,
     } = formData;
 
-    if (!name.trim()) {
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    // =========================
+    // VALIDATION
+    // =========================
+
+    if (!cleanName) {
       setError("Please enter your full name.");
       return;
     }
 
-    if (!email.trim()) {
+    if (!cleanEmail) {
       setError("Please enter your email address.");
       return;
     }
@@ -92,85 +88,76 @@ const Register = () => {
     try {
       setLoading(true);
 
-      // Firebase Authentication
-      const userCredential =
-        await createUserWithEmailAndPassword(
-          auth,
-          email.trim().toLowerCase(),
-          password
-        );
+      // =========================
+      // SEND OTP
+      // =========================
 
-      const user = userCredential.user;
-
-      // Firebase profile
-      await updateProfile(user, {
-        displayName: name.trim(),
-      });
-
-      // Firestore user profile
-      await setDoc(
-        doc(db, "users", user.uid),
+      const response = await fetch(
+        `${API_URL}/register/send-otp`,
         {
-          uid: user.uid,
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          emailVerified: false,
-          createdAt: serverTimestamp(),
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: cleanName,
+            email: cleanEmail,
+            password,
+          }),
         }
       );
 
-      // Email verification
-      await sendEmailVerification(user);
+      const data = await response.json();
 
-      setMessage(
-        "Account created successfully! A verification email has been sent."
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Unable to send OTP."
+        );
+      }
+
+      // =========================
+      // SAVE TEMPORARY DATA
+      // =========================
+
+      sessionStorage.setItem(
+        "swastprovaRegistration",
+        JSON.stringify({
+          name: cleanName,
+          email: cleanEmail,
+          password,
+        })
       );
 
-      setFormData({
-        name: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-      });
+      sessionStorage.setItem(
+        "swastprovaOTPEmail",
+        cleanEmail
+      );
 
+      setMessage(
+        "OTP has been sent to your email."
+      );
+
+      // =========================
+      // GO TO OTP PAGE
+      // =========================
+
+      setTimeout(() => {
+        navigate("/verify-otp", {
+          state: {
+            email: cleanEmail,
+          },
+        });
+      }, 500);
     } catch (err) {
       console.error(
         "REGISTER ERROR:",
         err
       );
 
-      if (
-        err.code ===
-        "auth/email-already-in-use"
-      ) {
-        setError(
-          "This email is already registered. Please login."
-        );
-      } else if (
-        err.code === "auth/invalid-email"
-      ) {
-        setError(
-          "Please enter a valid email address."
-        );
-      } else if (
-        err.code === "auth/weak-password"
-      ) {
-        setError(
-          "Password must be at least 6 characters."
-        );
-      } else if (
-        err.code ===
-        "auth/network-request-failed"
-      ) {
-        setError(
-          "Network error. Please check your internet connection."
-        );
-      } else {
-        setError(
-          err.message ||
-            "Registration failed. Please try again."
-        );
-      }
+      setError(
+        err.message ||
+          "Registration failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -178,15 +165,18 @@ const Register = () => {
 
   return (
     <div style={styles.page}>
+      {/* BACKGROUND CIRCLES */}
 
       <div style={styles.circleOne}></div>
       <div style={styles.circleTwo}></div>
 
       <div style={styles.container}>
 
-        {/* BRAND PANEL */}
-        <div style={styles.brandPanel}>
+        {/* =========================
+            LEFT BRAND SECTION
+        ========================= */}
 
+        <div style={styles.brandPanel}>
           <div style={styles.brandLogo}>
             🌱
           </div>
@@ -212,41 +202,54 @@ const Register = () => {
           </div>
 
           <div style={styles.miniFeatures}>
-
             <span>✓ Secure</span>
             <span>✓ Private</span>
             <span>✓ Supportive</span>
-
           </div>
         </div>
 
-        {/* REGISTER CARD */}
+        {/* =========================
+            REGISTER CARD
+        ========================= */}
+
         <div style={styles.card}>
+
+          {/* MOBILE LOGO */}
 
           <div style={styles.mobileLogo}>
             🌱
           </div>
 
-          <div style={styles.heading}>
-            <h2>Create Account</h2>
+          {/* HEADING */}
 
-            <p>
-              Join Swastprova and begin your wellness journey.
+          <div style={styles.heading}>
+            <h2 style={styles.headingTitle}>
+              Create Account
+            </h2>
+
+            <p style={styles.headingText}>
+              Join Swastprova and begin your
+              wellness journey.
             </p>
           </div>
+
+          {/* FORM */}
 
           <form
             onSubmit={handleSubmit}
             style={styles.form}
           >
 
-            {/* NAME */}
-            <div style={styles.field}>
+            {/* =========================
+                NAME
+            ========================= */}
 
-              <label>Full Name</label>
+            <div style={styles.field}>
+              <label style={styles.label}>
+                Full Name
+              </label>
 
               <div style={styles.inputWrapper}>
-
                 <span style={styles.inputIcon}>
                   👤
                 </span>
@@ -260,17 +263,19 @@ const Register = () => {
                   style={styles.input}
                   autoComplete="name"
                 />
-
               </div>
             </div>
 
-            {/* EMAIL */}
-            <div style={styles.field}>
+            {/* =========================
+                EMAIL
+            ========================= */}
 
-              <label>Email Address</label>
+            <div style={styles.field}>
+              <label style={styles.label}>
+                Email Address
+              </label>
 
               <div style={styles.inputWrapper}>
-
                 <span style={styles.inputIcon}>
                   ✉️
                 </span>
@@ -284,17 +289,19 @@ const Register = () => {
                   style={styles.input}
                   autoComplete="email"
                 />
-
               </div>
             </div>
 
-            {/* PASSWORD */}
-            <div style={styles.field}>
+            {/* =========================
+                PASSWORD
+            ========================= */}
 
-              <label>Password</label>
+            <div style={styles.field}>
+              <label style={styles.label}>
+                Password
+              </label>
 
               <div style={styles.inputWrapper}>
-
                 <span style={styles.inputIcon}>
                   🔒
                 </span>
@@ -317,24 +324,28 @@ const Register = () => {
                   type="button"
                   onClick={() =>
                     setShowPassword(
-                      !showPassword
+                      (prev) => !prev
                     )
                   }
                   style={styles.eyeButton}
                 >
-                  {showPassword ? "🙈" : "👁️"}
+                  {showPassword
+                    ? "🙈"
+                    : "👁️"}
                 </button>
-
               </div>
             </div>
 
-            {/* CONFIRM PASSWORD */}
-            <div style={styles.field}>
+            {/* =========================
+                CONFIRM PASSWORD
+            ========================= */}
 
-              <label>Confirm Password</label>
+            <div style={styles.field}>
+              <label style={styles.label}>
+                Confirm Password
+              </label>
 
               <div style={styles.inputWrapper}>
-
                 <span style={styles.inputIcon}>
                   🔐
                 </span>
@@ -359,7 +370,7 @@ const Register = () => {
                   type="button"
                   onClick={() =>
                     setShowConfirmPassword(
-                      !showConfirmPassword
+                      (prev) => !prev
                     )
                   }
                   style={styles.eyeButton}
@@ -368,62 +379,79 @@ const Register = () => {
                     ? "🙈"
                     : "👁️"}
                 </button>
-
               </div>
             </div>
 
-            {/* ERROR */}
+            {/* =========================
+                ERROR
+            ========================= */}
+
             {error && (
               <div style={styles.error}>
                 <span>⚠️</span>
-                {error}
+                <span>{error}</span>
               </div>
             )}
 
-            {/* SUCCESS */}
+            {/* =========================
+                SUCCESS
+            ========================= */}
+
             {message && (
               <div style={styles.success}>
                 <span>✓</span>
-                {message}
+                <span>{message}</span>
               </div>
             )}
 
-            {/* REGISTER */}
+            {/* =========================
+                SUBMIT BUTTON
+            ========================= */}
+
             <button
               type="submit"
               disabled={loading}
               style={{
                 ...styles.primaryButton,
                 opacity: loading ? 0.7 : 1,
+                cursor: loading
+                  ? "not-allowed"
+                  : "pointer",
               }}
             >
               {loading
-                ? "Creating Account..."
-                : "Create Account →"}
+                ? "Sending OTP..."
+                : "Continue →"}
             </button>
-
           </form>
 
-          {/* LOGIN */}
-          <div style={styles.loginArea}>
+          {/* =========================
+              LOGIN
+          ========================= */}
 
+          <div style={styles.loginArea}>
             <span>
               Already have an account?
             </span>
 
             <button
               type="button"
-              onClick={() => navigate("/login")}
+              onClick={() =>
+                navigate("/login")
+              }
               style={styles.loginButton}
             >
               Login
             </button>
-
           </div>
 
+          {/* =========================
+              OTP INFO
+          ========================= */}
+
           <div style={styles.info}>
-            📧 After registration, we'll send a
-            verification email to your address.
+            📧 We'll send a 6-digit OTP to
+            verify your email.
           </div>
 
         </div>
@@ -432,8 +460,11 @@ const Register = () => {
   );
 };
 
-const styles = {
+// =====================================================
+// STYLES
+// =====================================================
 
+const styles = {
   page: {
     minHeight: "100vh",
     display: "flex",
@@ -568,14 +599,14 @@ const styles = {
     marginBottom: "25px",
   },
 
-  "heading h2": {
+  headingTitle: {
     margin: "0 0 9px",
     fontSize: "31px",
     fontWeight: "900",
     color: "#0f172a",
   },
 
-  "heading p": {
+  headingText: {
     margin: 0,
     color: "#64748b",
     fontSize: "14px",
@@ -594,12 +625,19 @@ const styles = {
     gap: "7px",
   },
 
+  label: {
+    color: "#334155",
+    fontSize: "13px",
+    fontWeight: "700",
+  },
+
   inputWrapper: {
     display: "flex",
     alignItems: "center",
     border: "1px solid #dbe2ea",
     borderRadius: "13px",
     background: "#f8fafc",
+    transition: "0.2s",
   },
 
   inputIcon: {
@@ -615,6 +653,7 @@ const styles = {
     background: "transparent",
     padding: "13px 11px",
     fontSize: "14px",
+    color: "#0f172a",
   },
 
   eyeButton: {
@@ -622,6 +661,7 @@ const styles = {
     background: "transparent",
     cursor: "pointer",
     padding: "8px 12px",
+    fontSize: "15px",
   },
 
   primaryButton: {
@@ -633,20 +673,8 @@ const styles = {
     color: "white",
     fontSize: "15px",
     fontWeight: "800",
-    cursor: "pointer",
     boxShadow:
       "0 10px 25px rgba(37,99,235,0.20)",
-  },
-
-  secondaryButton: {
-    width: "100%",
-    borderRadius: "13px",
-    padding: "14px",
-    border: "1px solid #bfdbfe",
-    background: "white",
-    color: "#2563eb",
-    fontWeight: "800",
-    cursor: "pointer",
   },
 
   error: {

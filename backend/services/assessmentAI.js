@@ -111,47 +111,97 @@ ${JSON.stringify(answers)}
 `;
 
   try {
-    console.log("🤖 Sending assessment to Gemini...");
+    console.log(
+      "🤖 Sending assessment to Gemini..."
+    );
 
-    const response = await askGemini(prompt);
+    const response =
+      await askGemini(prompt);
 
-    console.log("✅ Gemini assessment response received");
+    console.log(
+      "✅ Gemini assessment response received"
+    );
 
-    let cleaned = response
-      .replace(/```json/gi, "")
-      .replace(/```/g, "")
-      .trim();
+    let cleaned =
+      response
+        .replace(/```json/gi, "")
+        .replace(/```/g, "")
+        .trim();
 
     /* ==========================================
        PARSE GEMINI JSON
     ========================================== */
 
     try {
-      const result = JSON.parse(cleaned);
+      const result =
+        JSON.parse(cleaned);
+
+      /* ==========================================
+         SAFE SCORE FUNCTION
+      ========================================== */
+
+      const safeScore = (value) => {
+        const number =
+          Number(value);
+
+        if (!Number.isFinite(number)) {
+          return 0;
+        }
+
+        return Math.max(
+          0,
+          Math.min(1, number)
+        );
+      };
+
+      /* ==========================================
+         RETURN ASSESSMENT RESULT
+      ========================================== */
 
       return {
-        indicators: Array.isArray(result.indicators)
-          ? result.indicators
-          : [],
+        indicators:
+          Array.isArray(result.indicators)
+            ? result.indicators
+            : [],
 
-        stress: Number(result.stress) || 0,
-        fear: Number(result.fear) || 0,
-        sleep: Number(result.sleep) || 0,
-        anxiety: Number(result.anxiety) || 0,
+        stress:
+          safeScore(result.stress),
+
+        fear:
+          safeScore(result.fear),
+
+        sleep:
+          safeScore(result.sleep),
+
+        anxiety:
+          safeScore(result.anxiety),
+
         socialIsolation:
-          Number(result.socialIsolation) || 0,
-        trauma: Number(result.trauma) || 0,
-        urgency: Number(result.urgency) || 0,
+          safeScore(
+            result.socialIsolation
+          ),
+
+        trauma:
+          safeScore(result.trauma),
+
+        urgency:
+          safeScore(result.urgency),
 
         confidence:
-          Number(result.confidence) || 0,
+          safeScore(result.confidence),
 
         recommendedSupport:
-          Array.isArray(result.recommendedSupport)
+          Array.isArray(
+            result.recommendedSupport
+          )
             ? result.recommendedSupport
-            : ["Human support review"],
+            : [
+                "Human support review",
+              ],
       };
+
     } catch (parseError) {
+
       console.error(
         "❌ Assessment JSON parsing failed:",
         parseError
@@ -163,11 +213,17 @@ ${JSON.stringify(answers)}
         ],
 
         stress: 0,
+
         fear: 0,
+
         sleep: 0,
+
         anxiety: 0,
+
         socialIsolation: 0,
+
         trauma: 0,
+
         urgency: 0,
 
         confidence: 0,
@@ -177,7 +233,9 @@ ${JSON.stringify(answers)}
         ],
       };
     }
+
   } catch (error) {
+
     console.error(
       "❌ Assessment Gemini Error:",
       error?.message || error

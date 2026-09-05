@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Components
@@ -23,6 +22,7 @@ import Assessment from "./pages/Assessment";
 // Authentication
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import OTP from "./pages/OTP";
 
 // Provider Registration
 import MentorRegister from "./pages/MentorRegister";
@@ -33,7 +33,6 @@ import BookSession from "./pages/BookSession";
 
 // Admin
 import AdminDashboard from "./pages/AdminDashboard";
-
 
 function App() {
   return (
@@ -46,11 +45,20 @@ function App() {
 
         {/* ================= MAIN PAGES ================= */}
 
-        <Route path="/" element={<Home />} />
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
-        <Route path="/about" element={<About />} />
+        <Route
+          path="/about"
+          element={<About />}
+        />
 
-        <Route path="/health" element={<Health />} />
+        <Route
+          path="/health"
+          element={<Health />}
+        />
 
         <Route
           path="/mental-health"
@@ -68,9 +76,10 @@ function App() {
         />
 
         {/* ================= LIVE CHAT ================= */}
-         <Route 
-          path="/LiveChat" 
-          element={<LiveChat />} 
+
+        <Route
+          path="/LiveChat"
+          element={<LiveChat />}
         />
 
         {/* ================= AI ASSESSMENT ================= */}
@@ -116,6 +125,13 @@ function App() {
           element={<Register />}
         />
 
+        {/* ================= OTP VERIFICATION ================= */}
+
+        <Route
+          path="/verify-otp"
+          element={<OTP />}
+        />
+
         {/* ================= PROVIDER REGISTRATION ================= */}
 
         <Route
@@ -149,4 +165,3 @@ function App() {
 }
 
 export default App;
-
