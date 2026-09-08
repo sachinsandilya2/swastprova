@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 
 export default function Health() {
@@ -53,6 +52,13 @@ export default function Health() {
       desc: "Connect, share and learn with others.",
       path: "/community",
       tag: "Connect",
+    },
+    {
+      icon: "🚨",
+      title: "Emergency Support",
+      desc: "Immediate crisis support, emergency contacts and professional help.",
+      path: "/emergency-support",
+      tag: "Emergency",
     },
     {
       icon: "📞",
@@ -646,4 +652,3 @@ const styles = {
   },
 
 };
-

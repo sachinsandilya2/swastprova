@@ -15,7 +15,7 @@ function BookSession() {
   const providerRole =
     provider.providerRole ||
     provider.role ||
-    "mentor";
+    "Mentor";
 
   const providerEmail =
     provider.providerEmail ||
@@ -38,14 +38,11 @@ function BookSession() {
   });
 
   const [loading, setLoading] = useState(false);
+
   const [status, setStatus] = useState({
     type: "",
     message: "",
   });
-
-  // -------------------------------
-  // HANDLE INPUT
-  // -------------------------------
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,10 +53,6 @@ function BookSession() {
     }));
   };
 
-  // -------------------------------
-  // SUBMIT BOOKING
-  // -------------------------------
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -68,17 +61,16 @@ function BookSession() {
       message: "",
     });
 
-    // Provider email required
-    if (!providerEmail) {
+    if (!providerEmail.trim()) {
       setStatus({
         type: "error",
         message:
           "Provider email is not available. Please go back and select the provider again.",
       });
+
       return;
     }
 
-    // Basic validation
     if (
       !formData.name.trim() ||
       !formData.email.trim() ||
@@ -90,10 +82,10 @@ function BookSession() {
         type: "error",
         message: "Please fill all required booking details.",
       });
+
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(formData.email.trim())) {
@@ -101,6 +93,17 @@ function BookSession() {
         type: "error",
         message: "Please enter a valid email address.",
       });
+
+      return;
+    }
+
+    if (!emailRegex.test(providerEmail.trim())) {
+      setStatus({
+        type: "error",
+        message:
+          "The selected provider has an invalid email address.",
+      });
+
       return;
     }
 
@@ -109,41 +112,56 @@ function BookSession() {
 
       const bookingData = {
         customerName: formData.name.trim(),
-        customerEmail: formData.email.trim(),
+
+        customerEmail: formData.email
+          .trim()
+          .toLowerCase(),
+
         customerPhone: formData.phone.trim(),
 
-        providerName,
-        providerRole,
-        providerEmail,
+        providerName: providerName,
+
+        providerRole: providerRole,
+
+        providerEmail: providerEmail
+          .trim()
+          .toLowerCase(),
 
         date: formData.date,
+
         time: formData.time,
 
         paymentMethod: formData.paymentMethod,
-        sessionFee,
+
+        sessionFee: sessionFee,
 
         message: formData.message.trim(),
       };
+
+      console.log("Sending booking request:", bookingData);
 
       const response = await fetch(
         "https://swastprova-2.onrender.com/book-appointment",
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify(bookingData),
         }
       );
 
-      // Safely read response
       const responseText = await response.text();
 
       let data;
 
       try {
         data = JSON.parse(responseText);
-      } catch {
+      } catch (error) {
+        console.error("Invalid server response:", responseText);
+
         data = {
           success: false,
           message:
@@ -151,13 +169,15 @@ function BookSession() {
         };
       }
 
+      console.log("Booking server response:", data);
+
       if (!response.ok || !data.success) {
         throw new Error(
-          data.message || "Unable to send booking request."
+          data.message ||
+            "Unable to send booking request."
         );
       }
 
-      // Success
       setStatus({
         type: "success",
         message:
@@ -165,7 +185,6 @@ function BookSession() {
           "Session request sent successfully! Confirmation emails have been sent.",
       });
 
-      // Reset form
       setFormData({
         name: "",
         email: "",
@@ -189,6 +208,10 @@ function BookSession() {
     }
   };
 
+  const today = new Date()
+    .toISOString()
+    .split("T")[0];
+
   return (
     <div
       style={{
@@ -203,8 +226,6 @@ function BookSession() {
           margin: "0 auto",
         }}
       >
-        {/* BACK BUTTON */}
-
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -215,24 +236,26 @@ function BookSession() {
             fontSize: "16px",
             marginBottom: "20px",
             color: "#2563eb",
+            fontWeight: "600",
           }}
         >
           ← Back
         </button>
-
-        {/* MAIN CARD */}
 
         <div
           style={{
             background: "#ffffff",
             borderRadius: "18px",
             padding: "30px",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+            boxShadow:
+              "0 10px 30px rgba(0,0,0,0.08)",
           }}
         >
-          {/* HEADER */}
-
-          <div style={{ marginBottom: "25px" }}>
+          <div
+            style={{
+              marginBottom: "25px",
+            }}
+          >
             <h1
               style={{
                 margin: "0 0 8px",
@@ -254,8 +277,6 @@ function BookSession() {
             </p>
           </div>
 
-          {/* PROVIDER DETAILS */}
-
           <div
             style={{
               background: "#eff6ff",
@@ -276,15 +297,18 @@ function BookSession() {
             </h2>
 
             <p style={{ margin: "7px 0" }}>
-              <strong>Name:</strong> {providerName}
+              <strong>Name:</strong>{" "}
+              {providerName}
             </p>
 
             <p style={{ margin: "7px 0" }}>
-              <strong>Role:</strong> {providerRole}
+              <strong>Role:</strong>{" "}
+              {providerRole}
             </p>
 
             <p style={{ margin: "7px 0" }}>
-              <strong>Session Fee:</strong> ₹{sessionFee}
+              <strong>Session Fee:</strong>{" "}
+              ₹{sessionFee}
             </p>
 
             <p
@@ -293,11 +317,10 @@ function BookSession() {
                 wordBreak: "break-word",
               }}
             >
-              <strong>Email:</strong> {providerEmail || "Not available"}
+              <strong>Email:</strong>{" "}
+              {providerEmail || "Not available"}
             </p>
           </div>
-
-          {/* STATUS MESSAGE */}
 
           {status.message && (
             <div
@@ -317,26 +340,18 @@ function BookSession() {
                   status.type === "success"
                     ? "#047857"
                     : "#b91c1c",
+                lineHeight: "1.5",
               }}
             >
               {status.message}
             </div>
           )}
 
-          {/* BOOKING FORM */}
-
           <form onSubmit={handleSubmit}>
-            {/* NAME */}
-
             <div style={{ marginBottom: "18px" }}>
               <label
                 htmlFor="name"
-                style={{
-                  display: "block",
-                  marginBottom: "7px",
-                  fontWeight: "600",
-                  color: "#374151",
-                }}
+                style={labelStyle}
               >
                 Full Name *
               </label>
@@ -349,11 +364,10 @@ function BookSession() {
                 onChange={handleChange}
                 placeholder="Enter your full name"
                 required
+                autoComplete="name"
                 style={inputStyle}
               />
             </div>
-
-            {/* EMAIL */}
 
             <div style={{ marginBottom: "18px" }}>
               <label
@@ -371,11 +385,10 @@ function BookSession() {
                 onChange={handleChange}
                 placeholder="Enter your email"
                 required
+                autoComplete="email"
                 style={inputStyle}
               />
             </div>
-
-            {/* PHONE */}
 
             <div style={{ marginBottom: "18px" }}>
               <label
@@ -393,11 +406,10 @@ function BookSession() {
                 onChange={handleChange}
                 placeholder="Enter your phone number"
                 required
+                autoComplete="tel"
                 style={inputStyle}
               />
             </div>
-
-            {/* DATE + TIME */}
 
             <div
               style={{
@@ -422,7 +434,7 @@ function BookSession() {
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
-                  min={new Date().toISOString().split("T")[0]}
+                  min={today}
                   required
                   style={inputStyle}
                 />
@@ -447,8 +459,6 @@ function BookSession() {
                 />
               </div>
             </div>
-
-            {/* PAYMENT */}
 
             <div style={{ marginBottom: "18px" }}>
               <label
@@ -479,8 +489,6 @@ function BookSession() {
               </select>
             </div>
 
-            {/* MESSAGE */}
-
             <div style={{ marginBottom: "25px" }}>
               <label
                 htmlFor="message"
@@ -503,8 +511,6 @@ function BookSession() {
                 }}
               />
             </div>
-
-            {/* SUBMIT */}
 
             <button
               type="submit"
@@ -535,10 +541,6 @@ function BookSession() {
     </div>
   );
 }
-
-// -------------------------------
-// STYLES
-// -------------------------------
 
 const labelStyle = {
   display: "block",

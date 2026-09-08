@@ -1,5 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { auth } from "../firebase";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -23,10 +28,7 @@ const Register = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // =========================
   // INPUT CHANGE
-  // =========================
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -39,10 +41,7 @@ const Register = () => {
     setMessage("");
   };
 
-  // =========================
   // REGISTER
-  // =========================
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -59,9 +58,9 @@ const Register = () => {
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
 
-    // =========================
+    // ==============================
     // VALIDATION
-    // =========================
+    // ==============================
 
     if (!cleanName) {
       setError("Please enter your full name.");
@@ -74,9 +73,7 @@ const Register = () => {
     }
 
     if (password.length < 6) {
-      setError(
-        "Password must be at least 6 characters."
-      );
+      setError("Password must be at least 6 characters.");
       return;
     }
 
@@ -85,12 +82,51 @@ const Register = () => {
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(cleanEmail)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      // =========================
-      // SEND OTP
-      // =========================
+      // ==========================================
+      // 1. CREATE FIREBASE ACCOUNT
+      // ==========================================
+
+      console.log("🔥 Creating Firebase account...");
+
+      const userCredential =
+        await createUserWithEmailAndPassword(
+          auth,
+          cleanEmail,
+          password
+        );
+
+      const user = userCredential.user;
+
+      console.log(
+        "✅ Firebase account created:",
+        user.uid
+      );
+
+      // ==========================================
+      // 2. SAVE USER NAME IN FIREBASE
+      // ==========================================
+
+      await updateProfile(user, {
+        displayName: cleanName,
+      });
+
+      console.log("✅ Firebase profile updated");
+
+      // ==========================================
+      // 3. SEND EXISTING BACKEND OTP
+      // ==========================================
+
+      console.log("📧 Sending verification OTP...");
 
       const response = await fetch(
         `${API_URL}/register/send-otp`,
@@ -107,7 +143,17 @@ const Register = () => {
         }
       );
 
-      const data = await response.json();
+      const responseText = await response.text();
+
+      let data;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          "Server returned an invalid response."
+        );
+      }
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -115,9 +161,11 @@ const Register = () => {
         );
       }
 
-      // =========================
-      // SAVE TEMPORARY DATA
-      // =========================
+      console.log("✅ OTP sent successfully");
+
+      // ==========================================
+      // 4. SAVE TEMPORARY REGISTRATION DATA
+      // ==========================================
 
       sessionStorage.setItem(
         "swastprovaRegistration",
@@ -125,6 +173,7 @@ const Register = () => {
           name: cleanName,
           email: cleanEmail,
           password,
+          firebaseUid: user.uid,
         })
       );
 
@@ -133,31 +182,58 @@ const Register = () => {
         cleanEmail
       );
 
-      setMessage(
-        "OTP has been sent to your email."
+      sessionStorage.setItem(
+        "swastprovaFirebaseUid",
+        user.uid
       );
 
-      // =========================
-      // GO TO OTP PAGE
-      // =========================
+      // ==========================================
+      // 5. SUCCESS MESSAGE
+      // ==========================================
+
+      setMessage(
+        "Account created successfully. OTP has been sent to your email."
+      );
+
+      // ==========================================
+      // 6. GO TO OTP PAGE
+      // ==========================================
 
       setTimeout(() => {
         navigate("/verify-otp", {
           state: {
             email: cleanEmail,
+            firebaseUid: user.uid,
           },
         });
-      }, 500);
+      }, 700);
     } catch (err) {
-      console.error(
-        "REGISTER ERROR:",
-        err
-      );
+      console.error("❌ REGISTER ERROR:", err);
 
-      setError(
-        err.message ||
-          "Registration failed. Please try again."
-      );
+      // ==========================================
+      // FIREBASE ERROR HANDLING
+      // ==========================================
+
+      if (err?.code === "auth/email-already-in-use") {
+        setError(
+          "This email is already registered. Please login instead."
+        );
+      } else if (err?.code === "auth/invalid-email") {
+        setError("Please enter a valid email address.");
+      } else if (err?.code === "auth/weak-password") {
+        setError(
+          "Password is too weak. Please use at least 6 characters."
+        );
+      } else if (err?.code === "auth/network-request-failed") {
+        setError(
+          "Network error. Please check your internet connection."
+        );
+      } else {
+        setError(
+          err?.message ||
+            "Registration failed. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -165,21 +241,17 @@ const Register = () => {
 
   return (
     <div style={styles.page}>
-      {/* BACKGROUND CIRCLES */}
-
       <div style={styles.circleOne}></div>
       <div style={styles.circleTwo}></div>
 
       <div style={styles.container}>
 
-        {/* =========================
-            LEFT BRAND SECTION
-        ========================= */}
+        {/* ======================================
+            BRAND PANEL
+        ====================================== */}
 
         <div style={styles.brandPanel}>
-          <div style={styles.brandLogo}>
-            🌱
-          </div>
+          <div style={styles.brandLogo}>🌱</div>
 
           <h1 style={styles.brandTitle}>
             Join Swastprova
@@ -208,19 +280,12 @@ const Register = () => {
           </div>
         </div>
 
-        {/* =========================
+        {/* ======================================
             REGISTER CARD
-        ========================= */}
+        ====================================== */}
 
         <div style={styles.card}>
-
-          {/* MOBILE LOGO */}
-
-          <div style={styles.mobileLogo}>
-            🌱
-          </div>
-
-          {/* HEADING */}
+          <div style={styles.mobileLogo}>🌱</div>
 
           <div style={styles.heading}>
             <h2 style={styles.headingTitle}>
@@ -228,21 +293,16 @@ const Register = () => {
             </h2>
 
             <p style={styles.headingText}>
-              Join Swastprova and begin your
-              wellness journey.
+              Join Swastprova and begin your wellness journey.
             </p>
           </div>
-
-          {/* FORM */}
 
           <form
             onSubmit={handleSubmit}
             style={styles.form}
           >
 
-            {/* =========================
-                NAME
-            ========================= */}
+            {/* FULL NAME */}
 
             <div style={styles.field}>
               <label style={styles.label}>
@@ -266,9 +326,7 @@ const Register = () => {
               </div>
             </div>
 
-            {/* =========================
-                EMAIL
-            ========================= */}
+            {/* EMAIL */}
 
             <div style={styles.field}>
               <label style={styles.label}>
@@ -292,9 +350,7 @@ const Register = () => {
               </div>
             </div>
 
-            {/* =========================
-                PASSWORD
-            ========================= */}
+            {/* PASSWORD */}
 
             <div style={styles.field}>
               <label style={styles.label}>
@@ -336,9 +392,7 @@ const Register = () => {
               </div>
             </div>
 
-            {/* =========================
-                CONFIRM PASSWORD
-            ========================= */}
+            {/* CONFIRM PASSWORD */}
 
             <div style={styles.field}>
               <label style={styles.label}>
@@ -358,9 +412,7 @@ const Register = () => {
                   }
                   name="confirmPassword"
                   placeholder="Confirm your password"
-                  value={
-                    formData.confirmPassword
-                  }
+                  value={formData.confirmPassword}
                   onChange={handleChange}
                   style={styles.input}
                   autoComplete="new-password"
@@ -382,9 +434,7 @@ const Register = () => {
               </div>
             </div>
 
-            {/* =========================
-                ERROR
-            ========================= */}
+            {/* ERROR */}
 
             {error && (
               <div style={styles.error}>
@@ -393,9 +443,7 @@ const Register = () => {
               </div>
             )}
 
-            {/* =========================
-                SUCCESS
-            ========================= */}
+            {/* SUCCESS */}
 
             {message && (
               <div style={styles.success}>
@@ -404,9 +452,7 @@ const Register = () => {
               </div>
             )}
 
-            {/* =========================
-                SUBMIT BUTTON
-            ========================= */}
+            {/* SUBMIT */}
 
             <button
               type="submit"
@@ -420,14 +466,12 @@ const Register = () => {
               }}
             >
               {loading
-                ? "Sending OTP..."
+                ? "Creating Account..."
                 : "Continue →"}
             </button>
           </form>
 
-          {/* =========================
-              LOGIN
-          ========================= */}
+          {/* LOGIN */}
 
           <div style={styles.loginArea}>
             <span>
@@ -445,24 +489,20 @@ const Register = () => {
             </button>
           </div>
 
-          {/* =========================
-              OTP INFO
-          ========================= */}
+          {/* INFO */}
 
           <div style={styles.info}>
-            📧 We'll send a 6-digit OTP to
-            verify your email.
+            📧 We'll send a 6-digit OTP to verify your email.
           </div>
-
         </div>
       </div>
     </div>
   );
 };
 
-// =====================================================
+// ==========================================
 // STYLES
-// =====================================================
+// ==========================================
 
 const styles = {
   page: {
@@ -506,7 +546,8 @@ const styles = {
     width: "100%",
     maxWidth: "1050px",
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns:
+      "1fr 1fr",
     borderRadius: "30px",
     overflow: "hidden",
     boxShadow:
@@ -583,7 +624,8 @@ const styles = {
 
   card: {
     padding: "45px",
-    background: "rgba(255,255,255,0.97)",
+    background:
+      "rgba(255,255,255,0.97)",
     minHeight: "620px",
     boxSizing: "border-box",
     display: "flex",
@@ -634,7 +676,8 @@ const styles = {
   inputWrapper: {
     display: "flex",
     alignItems: "center",
-    border: "1px solid #dbe2ea",
+    border:
+      "1px solid #dbe2ea",
     borderRadius: "13px",
     background: "#f8fafc",
     transition: "0.2s",
@@ -703,7 +746,8 @@ const styles = {
     textAlign: "center",
     marginTop: "22px",
     paddingTop: "18px",
-    borderTop: "1px solid #e2e8f0",
+    borderTop:
+      "1px solid #e2e8f0",
     color: "#64748b",
     fontSize: "13px",
   },

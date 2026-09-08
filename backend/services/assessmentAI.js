@@ -1,8 +1,8 @@
 import { askGemini } from "../gemini.js";
 
-/* ==========================================
+/* ============================================================
    AI STRESS & TRAUMA ASSESSMENT
-========================================== */
+   ============================================================ */
 
 export async function analyzeAssessment({
   text = "",
@@ -63,7 +63,6 @@ NUMERICAL RULES:
 Meaning:
 
 0 = no clear indication
-
 1 = strong indication
 
 INDICATORS:
@@ -72,27 +71,12 @@ The "indicators" array should contain short,
 human-readable observations based only on the
 information provided by the user.
 
-Example:
-
-[
-  "User describes persistent fear",
-  "User reports difficulty sleeping"
-]
-
 Do not diagnose anything.
 
 RECOMMENDED SUPPORT:
 
 The "recommendedSupport" array should contain
 appropriate non-medical support options.
-
-Examples:
-
-[
-  "Talk to a trusted person",
-  "Consider speaking with a qualified counsellor",
-  "Human support review recommended"
-]
 
 If the user's information does not indicate significant
 distress, do not exaggerate the risk.
@@ -111,38 +95,28 @@ ${JSON.stringify(answers)}
 `;
 
   try {
-    console.log(
-      "🤖 Sending assessment to Gemini..."
-    );
+    console.log("🤖 Sending assessment to Gemini...");
 
-    const response =
-      await askGemini(prompt);
+    const response = await askGemini(prompt);
 
     console.log(
       "✅ Gemini assessment response received"
     );
 
-    let cleaned =
-      response
-        .replace(/```json/gi, "")
-        .replace(/```/g, "")
-        .trim();
-
-    /* ==========================================
-       PARSE GEMINI JSON
-    ========================================== */
+    let cleaned = String(response)
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
 
     try {
-      const result =
-        JSON.parse(cleaned);
+      const result = JSON.parse(cleaned);
 
-      /* ==========================================
-         SAFE SCORE FUNCTION
-      ========================================== */
+      /* ======================================================
+         SAFE SCORE
+         ====================================================== */
 
       const safeScore = (value) => {
-        const number =
-          Number(value);
+        const number = Number(value);
 
         if (!Number.isFinite(number)) {
           return 0;
@@ -154,9 +128,9 @@ ${JSON.stringify(answers)}
         );
       };
 
-      /* ==========================================
-         RETURN ASSESSMENT RESULT
-      ========================================== */
+      /* ======================================================
+         FINAL AI ASSESSMENT
+         ====================================================== */
 
       return {
         indicators:
@@ -196,12 +170,10 @@ ${JSON.stringify(answers)}
           )
             ? result.recommendedSupport
             : [
-                "Human support review",
+                "Human support review recommended",
               ],
       };
-
     } catch (parseError) {
-
       console.error(
         "❌ Assessment JSON parsing failed:",
         parseError
@@ -213,29 +185,20 @@ ${JSON.stringify(answers)}
         ],
 
         stress: 0,
-
         fear: 0,
-
         sleep: 0,
-
         anxiety: 0,
-
         socialIsolation: 0,
-
         trauma: 0,
-
         urgency: 0,
-
         confidence: 0,
 
         recommendedSupport: [
-          "Human counsellor review",
+          "Human counsellor review recommended",
         ],
       };
     }
-
   } catch (error) {
-
     console.error(
       "❌ Assessment Gemini Error:",
       error?.message || error

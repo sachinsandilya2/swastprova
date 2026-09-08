@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { auth } from "../firebase";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -75,6 +76,10 @@ const OTP = () => {
     try {
       setLoading(true);
 
+      // ==========================================
+      // VERIFY OTP FROM BACKEND
+      // ==========================================
+
       const response = await fetch(
         `${API_URL}/register/verify-otp`,
         {
@@ -89,7 +94,17 @@ const OTP = () => {
         }
       );
 
-      const data = await response.json();
+      const responseText = await response.text();
+
+      let data;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          "Server returned an invalid response."
+        );
+      }
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -97,18 +112,72 @@ const OTP = () => {
         );
       }
 
-      setMessage(
-        "Email verified successfully! Your account has been created."
-      );
+      // ==========================================
+      // CHECK FIREBASE USER
+      // ==========================================
+
+      const firebaseUser = auth.currentUser;
+
+      if (firebaseUser) {
+        console.log(
+          "✅ Firebase user confirmed:",
+          firebaseUser.uid
+        );
+
+        sessionStorage.setItem(
+          "swastprovaFirebaseUid",
+          firebaseUser.uid
+        );
+
+        sessionStorage.setItem(
+          "swastprovaUserEmail",
+          firebaseUser.email || email
+        );
+
+        if (firebaseUser.displayName) {
+          sessionStorage.setItem(
+            "swastprovaUserName",
+            firebaseUser.displayName
+          );
+        }
+      } else {
+        console.warn(
+          "⚠️ Firebase user session not found."
+        );
+      }
+
+      // ==========================================
+      // CLEAN OTP DATA
+      // ==========================================
 
       sessionStorage.removeItem(
         "swastprovaOTPEmail"
       );
 
-      setTimeout(() => {
-        navigate("/login");
-      }, 1200);
+      sessionStorage.removeItem(
+        "swastprovaRegistration"
+      );
 
+      // ==========================================
+      // SUCCESS
+      // ==========================================
+
+      setMessage(
+        "Email verified successfully! Your account is ready."
+      );
+
+      // ==========================================
+      // GO TO LOGIN
+      // ==========================================
+
+      setTimeout(() => {
+        navigate("/login", {
+          state: {
+            email: email.trim().toLowerCase(),
+            registered: true,
+          },
+        });
+      }, 1200);
     } catch (err) {
       console.error(
         "OTP VERIFICATION ERROR:",
@@ -159,7 +228,17 @@ const OTP = () => {
         }
       );
 
-      const data = await response.json();
+      const responseText = await response.text();
+
+      let data;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          "Server returned an invalid response."
+        );
+      }
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -174,7 +253,6 @@ const OTP = () => {
 
       setOtp("");
       setTimer(60);
-
     } catch (err) {
       console.error(
         "RESEND OTP ERROR:",
@@ -191,12 +269,16 @@ const OTP = () => {
   };
 
   // =========================
-  // CHANGE EMAIL / BACK
+  // BACK TO REGISTER
   // =========================
 
   const handleBack = () => {
     sessionStorage.removeItem(
       "swastprovaOTPEmail"
+    );
+
+    sessionStorage.removeItem(
+      "swastprovaRegistration"
     );
 
     navigate("/register");
@@ -205,13 +287,15 @@ const OTP = () => {
   return (
     <div style={styles.page}>
 
-      {/* Background */}
+      {/* BACKGROUND */}
+
       <div style={styles.circleOne}></div>
       <div style={styles.circleTwo}></div>
 
       <div style={styles.card}>
 
-        {/* Logo */}
+        {/* LOGO */}
+
         <div style={styles.logo}>
           🌱
         </div>
@@ -229,11 +313,11 @@ const OTP = () => {
         </div>
 
         {/* OTP FORM */}
+
         <form
           onSubmit={handleVerifyOTP}
           style={styles.form}
         >
-
           <label style={styles.label}>
             Enter OTP
           </label>
@@ -257,6 +341,7 @@ const OTP = () => {
           />
 
           {/* ERROR */}
+
           {error && (
             <div style={styles.error}>
               ⚠️ {error}
@@ -264,13 +349,15 @@ const OTP = () => {
           )}
 
           {/* SUCCESS */}
+
           {message && (
             <div style={styles.success}>
               ✓ {message}
             </div>
           )}
 
-          {/* VERIFY */}
+          {/* VERIFY BUTTON */}
+
           <button
             type="submit"
             disabled={
@@ -284,6 +371,11 @@ const OTP = () => {
                 otp.length !== 6
                   ? 0.65
                   : 1,
+              cursor:
+                loading ||
+                otp.length !== 6
+                  ? "not-allowed"
+                  : "pointer",
             }}
           >
             {loading
@@ -293,11 +385,12 @@ const OTP = () => {
         </form>
 
         {/* RESEND */}
-        <div style={styles.resendArea}>
 
+        <div style={styles.resendArea}>
           {timer > 0 ? (
             <p style={styles.timerText}>
-              Resend OTP in{" "}
+              Resend OTP{" "}
+              in{" "}
               <strong>
                 {timer}s
               </strong>
@@ -314,10 +407,10 @@ const OTP = () => {
                 : "Resend OTP"}
             </button>
           )}
-
         </div>
 
         {/* BACK */}
+
         <button
           type="button"
           onClick={handleBack}
@@ -327,6 +420,7 @@ const OTP = () => {
         </button>
 
         {/* SECURITY */}
+
         <div style={styles.info}>
           🔒 Your verification code is private.
           <br />
@@ -338,8 +432,11 @@ const OTP = () => {
   );
 };
 
-const styles = {
+// ==========================================
+// STYLES
+// ==========================================
 
+const styles = {
   page: {
     minHeight: "100vh",
     display: "flex",
@@ -467,7 +564,6 @@ const styles = {
     color: "white",
     fontSize: "15px",
     fontWeight: "800",
-    cursor: "pointer",
     boxShadow:
       "0 10px 25px rgba(37,99,235,0.22)",
   },

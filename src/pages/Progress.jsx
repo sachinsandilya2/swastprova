@@ -1,39 +1,70 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   doc,
   getDoc,
   setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 
 const Progress = () => {
+  const [user, setUser] = useState(null);
+
   const [progress, setProgress] = useState({
     streak: 0,
     goalsCompleted: 0,
     totalGoals: 12,
     moodScore: 0,
+    sleepHours: 0,
+    activityMinutes: 0,
+    meditationMinutes: 0,
+    waterGlasses: 0,
   });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Demo user ID
-  // Baad mein Firebase Authentication ke user.uid se replace kar sakte hain.
-  const userId = "demo-user";
-
-  const progressRef = doc(db, "progress", userId);
-
   // =====================================================
-  // LOAD DATA FROM FIREBASE
+  // AUTHENTICATION
   // =====================================================
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // =====================================================
+  // FIREBASE DOCUMENT
+  // =====================================================
+
+  const progressRef = useMemo(() => {
+    if (!user?.uid) return null;
+
+    return doc(db, "progress", user.uid);
+  }, [user]);
+
+  // =====================================================
+  // LOAD USER PROGRESS
+  // =====================================================
+
+  useEffect(() => {
+    if (!progressRef) {
+      setLoading(false);
+      return;
+    }
+
     let mounted = true;
 
     const loadProgress = async () => {
       try {
+        setLoading(true);
+
         const snapshot = await getDoc(progressRef);
 
         if (snapshot.exists() && mounted) {
@@ -41,20 +72,43 @@ const Progress = () => {
 
           setProgress((prev) => ({
             ...prev,
+
             streak: Number(data.streak ?? prev.streak),
+
             goalsCompleted: Number(
               data.goalsCompleted ?? prev.goalsCompleted
             ),
+
             totalGoals: Number(
               data.totalGoals ?? prev.totalGoals
             ),
+
             moodScore: Number(
               data.moodScore ?? prev.moodScore
+            ),
+
+            sleepHours: Number(
+              data.sleepHours ?? prev.sleepHours
+            ),
+
+            activityMinutes: Number(
+              data.activityMinutes ?? prev.activityMinutes
+            ),
+
+            meditationMinutes: Number(
+              data.meditationMinutes ?? prev.meditationMinutes
+            ),
+
+            waterGlasses: Number(
+              data.waterGlasses ?? prev.waterGlasses
             ),
           }));
         }
       } catch (error) {
-        console.error("❌ Error loading progress:", error);
+        console.error(
+          "❌ Error loading progress:",
+          error
+        );
       } finally {
         if (mounted) {
           setLoading(false);
@@ -67,18 +121,39 @@ const Progress = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [progressRef]);
 
   // =====================================================
   // UPDATE VALUE
   // =====================================================
 
   const updateProgress = (field, value) => {
-    const numberValue = Number(value);
+    let numberValue = Number(value);
 
+    if (Number.isNaN(numberValue)) {
+      numberValue = 0;
+    }
+
+    // Prevent negative values
+    numberValue = Math.max(numberValue, 0);
+
+    // Mood maximum 100
+    if (field === "moodScore") {
+      numberValue = Math.min(numberValue, 100);
+    }
+
+    // Goals completed cannot exceed total goals
+    if (field === "goalsCompleted") {
+      numberValue = Math.min(
+        numberValue,
+        Number(progress.totalGoals) || 0
+      );
+    }
+
+    // Mood / wellness values
     setProgress((prev) => ({
       ...prev,
-      [field]: Number.isNaN(numberValue) ? 0 : numberValue,
+      [field]: numberValue,
     }));
 
     setSaved(false);
@@ -89,41 +164,161 @@ const Progress = () => {
   // =====================================================
 
   const saveProgress = async () => {
+    if (!user?.uid) {
+      alert("Please login first to save your progress.");
+      return;
+    }
+
     if (saving) return;
 
     try {
       setSaving(true);
       setSaved(false);
 
-      await setDoc(progressRef, {
+      const dataToSave = {
+        userId: user.uid,
+
         streak: Number(progress.streak),
-        goalsCompleted: Number(progress.goalsCompleted),
-        totalGoals: Number(progress.totalGoals),
-        moodScore: Number(progress.moodScore),
-        updatedAt: new Date(),
-      });
+
+        goalsCompleted: Number(
+          progress.goalsCompleted
+        ),
+
+        totalGoals: Number(
+          progress.totalGoals
+        ),
+
+        moodScore: Number(
+          progress.moodScore
+        ),
+
+        sleepHours: Number(
+          progress.sleepHours
+        ),
+
+        activityMinutes: Number(
+          progress.activityMinutes
+        ),
+
+        meditationMinutes: Number(
+          progress.meditationMinutes
+        ),
+
+        waterGlasses: Number(
+          progress.waterGlasses
+        ),
+
+        updatedAt: serverTimestamp(),
+      };
+
+      await setDoc(
+        progressRef,
+        dataToSave,
+        {
+          merge: true,
+        }
+      );
 
       setSaved(true);
 
       setTimeout(() => {
         setSaved(false);
-      }, 2500);
+      }, 3000);
+
     } catch (error) {
-      console.error("❌ Firebase Save Error:", error);
-      alert("Progress save nahi ho paya.");
+      console.error(
+        "❌ Firebase Save Error:",
+        error
+      );
+
+      alert(
+        "Progress save nahi ho paya. Please try again."
+      );
     } finally {
       setSaving(false);
     }
   };
 
   // =====================================================
-  // PERCENTAGE
+  // AUTO SAVE
+  // =====================================================
+
+  useEffect(() => {
+    if (!user?.uid || loading) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        await setDoc(
+          progressRef,
+          {
+            userId: user.uid,
+
+            streak: Number(progress.streak),
+
+            goalsCompleted: Number(
+              progress.goalsCompleted
+            ),
+
+            totalGoals: Number(
+              progress.totalGoals
+            ),
+
+            moodScore: Number(
+              progress.moodScore
+            ),
+
+            sleepHours: Number(
+              progress.sleepHours
+            ),
+
+            activityMinutes: Number(
+              progress.activityMinutes
+            ),
+
+            meditationMinutes: Number(
+              progress.meditationMinutes
+            ),
+
+            waterGlasses: Number(
+              progress.waterGlasses
+            ),
+
+            updatedAt: serverTimestamp(),
+          },
+          {
+            merge: true,
+          }
+        );
+
+        console.log(
+          "🔥 Progress auto-saved"
+        );
+      } catch (error) {
+        console.error(
+          "❌ Auto-save error:",
+          error
+        );
+      }
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [
+    progress,
+    user,
+    loading,
+    progressRef,
+  ]);
+
+  // =====================================================
+  // GOAL PERCENTAGE
   // =====================================================
 
   const goalPercentage =
     progress.totalGoals > 0
       ? Math.round(
-          (progress.goalsCompleted / progress.totalGoals) * 100
+          (progress.goalsCompleted /
+            progress.totalGoals) *
+            100
         )
       : 0;
 
@@ -131,6 +326,73 @@ const Progress = () => {
     Math.max(goalPercentage, 0),
     100
   );
+
+  // =====================================================
+  // OVERALL WELLNESS SCORE
+  // =====================================================
+
+  const wellnessScore = Math.round(
+    (
+      Number(progress.moodScore) * 0.4 +
+      Math.min(
+        Number(progress.sleepHours) / 8 * 100,
+        100
+      ) * 0.2 +
+      Math.min(
+        Number(progress.activityMinutes) / 30 * 100,
+        100
+      ) * 0.15 +
+      Math.min(
+        Number(progress.meditationMinutes) / 10 * 100,
+        100
+      ) * 0.1 +
+      Math.min(
+        Number(progress.waterGlasses) / 8 * 100,
+        100
+      ) * 0.15
+    )
+  );
+
+  const safeWellnessScore = Math.min(
+    Math.max(wellnessScore, 0),
+    100
+  );
+
+  // =====================================================
+  // LOGIN CHECK
+  // =====================================================
+
+  if (!loading && !user) {
+    return (
+      <div style={styles.loginPage}>
+
+        <div style={styles.loginCard}>
+
+          <div style={styles.loginIcon}>
+            🔐
+          </div>
+
+          <h1 style={styles.loginTitle}>
+            Login Required
+          </h1>
+
+          <p style={styles.loginText}>
+            Please login to SWASTPROVA to save and
+            track your personal wellness progress.
+          </p>
+
+          <a
+            href="/login"
+            style={styles.loginButton}
+          >
+            Login to Continue →
+          </a>
+
+        </div>
+
+      </div>
+    );
+  }
 
   // =====================================================
   // PAGE
@@ -155,13 +417,20 @@ const Progress = () => {
         </h1>
 
         <p style={styles.subtitle}>
-          Track your habits, goals and wellness journey
-          in one place.
+          Track your habits, goals, mood and wellness
+          journey in one professional dashboard.
         </p>
+
+        {user && (
+          <div style={styles.userBadge}>
+            👤 Progress for your account
+          </div>
+        )}
 
       </section>
 
-      {/* ================= STATS ================= */}
+
+      {/* ================= MAIN STATS ================= */}
 
       <section style={styles.statsGrid}>
 
@@ -194,6 +463,7 @@ const Progress = () => {
           </p>
 
         </div>
+
 
         {/* GOALS */}
 
@@ -238,6 +508,7 @@ const Progress = () => {
 
         </div>
 
+
         {/* MOOD */}
 
         <div style={styles.card}>
@@ -270,9 +541,43 @@ const Progress = () => {
 
         </div>
 
+
+        {/* WELLNESS */}
+
+        <div style={styles.card}>
+
+          <div style={styles.cardTop}>
+
+            <div style={styles.iconGreen}>
+              💚
+            </div>
+
+            <span style={styles.label}>
+              WELLNESS SCORE
+            </span>
+
+          </div>
+
+          <h2 style={styles.number}>
+
+            {safeWellnessScore}
+
+            <span style={styles.percent}>
+              %
+            </span>
+
+          </h2>
+
+          <p style={styles.smallText}>
+            Based on your daily wellness inputs.
+          </p>
+
+        </div>
+
       </section>
 
-      {/* ================= UPDATE ================= */}
+
+      {/* ================= DAILY WELLNESS ================= */}
 
       <section style={styles.updateSection}>
 
@@ -281,7 +586,7 @@ const Progress = () => {
           <div>
 
             <span style={styles.sectionBadge}>
-              UPDATE
+              DAILY WELLNESS
             </span>
 
             <h2 style={styles.updateTitle}>
@@ -289,8 +594,8 @@ const Progress = () => {
             </h2>
 
             <p style={styles.updateDescription}>
-              Enter your latest progress and save it
-              securely to Firebase.
+              Your progress is securely linked to your
+              Firebase account and automatically saved.
             </p>
 
           </div>
@@ -300,6 +605,7 @@ const Progress = () => {
           </div>
 
         </div>
+
 
         {/* ================= FORM ================= */}
 
@@ -326,7 +632,12 @@ const Progress = () => {
               style={styles.input}
             />
 
+            <small style={styles.hint}>
+              Number of consecutive days
+            </small>
+
           </div>
+
 
           {/* GOALS */}
 
@@ -350,7 +661,12 @@ const Progress = () => {
               style={styles.input}
             />
 
+            <small style={styles.hint}>
+              Completed goals
+            </small>
+
           </div>
+
 
           {/* TOTAL GOALS */}
 
@@ -373,7 +689,12 @@ const Progress = () => {
               style={styles.input}
             />
 
+            <small style={styles.hint}>
+              Your current target
+            </small>
+
           </div>
+
 
           {/* MOOD */}
 
@@ -397,9 +718,128 @@ const Progress = () => {
               style={styles.input}
             />
 
+            <small style={styles.hint}>
+              0 = very low · 100 = excellent
+            </small>
+
+          </div>
+
+
+          {/* SLEEP */}
+
+          <div style={styles.field}>
+
+            <label style={styles.fieldLabel}>
+              💤 Sleep Hours
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              max="24"
+              step="0.5"
+              value={progress.sleepHours}
+              onChange={(e) =>
+                updateProgress(
+                  "sleepHours",
+                  e.target.value
+                )
+              }
+              style={styles.input}
+            />
+
+            <small style={styles.hint}>
+              Hours slept last night
+            </small>
+
+          </div>
+
+
+          {/* ACTIVITY */}
+
+          <div style={styles.field}>
+
+            <label style={styles.fieldLabel}>
+              🏃 Activity Minutes
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              value={progress.activityMinutes}
+              onChange={(e) =>
+                updateProgress(
+                  "activityMinutes",
+                  e.target.value
+                )
+              }
+              style={styles.input}
+            />
+
+            <small style={styles.hint}>
+              Exercise or active movement
+            </small>
+
+          </div>
+
+
+          {/* MEDITATION */}
+
+          <div style={styles.field}>
+
+            <label style={styles.fieldLabel}>
+              🧘 Meditation Minutes
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              value={progress.meditationMinutes}
+              onChange={(e) =>
+                updateProgress(
+                  "meditationMinutes",
+                  e.target.value
+                )
+              }
+              style={styles.input}
+            />
+
+            <small style={styles.hint}>
+              Mindfulness or breathing
+            </small>
+
+          </div>
+
+
+          {/* WATER */}
+
+          <div style={styles.field}>
+
+            <label style={styles.fieldLabel}>
+              💧 Water Glasses
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              value={progress.waterGlasses}
+              onChange={(e) =>
+                updateProgress(
+                  "waterGlasses",
+                  e.target.value
+                )
+              }
+              style={styles.input}
+            />
+
+            <small style={styles.hint}>
+              Glasses of water today
+            </small>
+
           </div>
 
         </div>
+
 
         {/* ================= SAVE ================= */}
 
@@ -423,6 +863,7 @@ const Progress = () => {
 
           </button>
 
+
           {saved && (
             <div style={styles.success}>
               ✅ Progress saved successfully!
@@ -431,15 +872,123 @@ const Progress = () => {
 
         </div>
 
-        {/* SMALL FIREBASE STATUS */}
+
+        {/* AUTO SAVE */}
+
+        <div style={styles.autoSave}>
+          🔄 Changes are automatically saved to your
+          Firebase account.
+        </div>
+
 
         {loading && (
           <p style={styles.loadingStatus}>
-            🔄 Loading saved progress...
+            🔄 Loading your saved progress...
           </p>
         )}
 
       </section>
+
+
+      {/* ================= WELLNESS INSIGHTS ================= */}
+
+      <section style={styles.insightSection}>
+
+        <div style={styles.sectionHeader}>
+
+          <span style={styles.sectionBadge}>
+            WELLNESS INSIGHTS
+          </span>
+
+          <h2 style={styles.insightTitle}>
+            Your Daily Wellness Snapshot
+          </h2>
+
+        </div>
+
+
+        <div style={styles.insightGrid}>
+
+          <div style={styles.insightCard}>
+            <div style={styles.insightIcon}>
+              💤
+            </div>
+
+            <h3 style={styles.insightCardTitle}>
+              Sleep
+            </h3>
+
+            <strong style={styles.insightNumber}>
+              {progress.sleepHours} hrs
+            </strong>
+
+            <p style={styles.insightText}>
+              Aim for a consistent and healthy sleep routine.
+            </p>
+          </div>
+
+
+          <div style={styles.insightCard}>
+            <div style={styles.insightIcon}>
+              🏃
+            </div>
+
+            <h3 style={styles.insightCardTitle}>
+              Activity
+            </h3>
+
+            <strong style={styles.insightNumber}>
+              {progress.activityMinutes} min
+            </strong>
+
+            <p style={styles.insightText}>
+              Regular movement can support overall well-being.
+            </p>
+          </div>
+
+
+          <div style={styles.insightCard}>
+            <div style={styles.insightIcon}>
+              🧘
+            </div>
+
+            <h3 style={styles.insightCardTitle}>
+              Mindfulness
+            </h3>
+
+            <strong style={styles.insightNumber}>
+              {progress.meditationMinutes} min
+            </strong>
+
+            <p style={styles.insightText}>
+              Small mindfulness practices can help create a
+              calmer routine.
+            </p>
+          </div>
+
+
+          <div style={styles.insightCard}>
+            <div style={styles.insightIcon}>
+              💧
+            </div>
+
+            <h3 style={styles.insightCardTitle}>
+              Hydration
+            </h3>
+
+            <strong style={styles.insightNumber}>
+              {progress.waterGlasses} glasses
+            </strong>
+
+            <p style={styles.insightText}>
+              Keep track of your daily hydration habits.
+            </p>
+          </div>
+
+        </div>
+
+      </section>
+
 
       {/* ================= INFO ================= */}
 
@@ -517,11 +1066,22 @@ const styles = {
   },
 
   subtitle: {
-    maxWidth: "650px",
+    maxWidth: "700px",
     margin: "auto",
     color: "#64748b",
     fontSize: "18px",
     lineHeight: "1.7",
+  },
+
+  userBadge: {
+    display: "inline-block",
+    marginTop: "18px",
+    padding: "8px 14px",
+    borderRadius: "50px",
+    background: "#eff6ff",
+    color: "#2563eb",
+    fontSize: "12px",
+    fontWeight: "800",
   },
 
   statsGrid: {
@@ -530,7 +1090,7 @@ const styles = {
     padding: "0 20px",
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit,minmax(260px,1fr))",
+      "repeat(auto-fit,minmax(240px,1fr))",
     gap: "20px",
   },
 
@@ -582,6 +1142,17 @@ const styles = {
     fontSize: "23px",
   },
 
+  iconGreen: {
+    width: "48px",
+    height: "48px",
+    borderRadius: "14px",
+    background: "#f0fdf4",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "23px",
+  },
+
   label: {
     fontSize: "11px",
     fontWeight: "900",
@@ -590,7 +1161,7 @@ const styles = {
   },
 
   number: {
-    fontSize: "48px",
+    fontSize: "43px",
     margin: "22px 0 0",
     color: "#0f172a",
   },
@@ -667,6 +1238,7 @@ const styles = {
   updateDescription: {
     color: "#64748b",
     margin: 0,
+    lineHeight: "1.6",
   },
 
   firebaseBadge: {
@@ -709,6 +1281,11 @@ const styles = {
     background: "#f8fafc",
   },
 
+  hint: {
+    color: "#94a3b8",
+    fontSize: "11px",
+  },
+
   saveArea: {
     marginTop: "30px",
     display: "flex",
@@ -736,15 +1313,82 @@ const styles = {
     fontSize: "14px",
   },
 
+  autoSave: {
+    marginTop: "15px",
+    color: "#64748b",
+    fontSize: "12px",
+  },
+
   loadingStatus: {
     marginTop: "15px",
     color: "#64748b",
     fontSize: "13px",
   },
 
+  /* ================= INSIGHTS ================= */
+
+  insightSection: {
+    maxWidth: "1100px",
+    margin: "55px auto 0",
+    padding: "0 20px",
+  },
+
+  sectionHeader: {
+    textAlign: "center",
+    marginBottom: "25px",
+  },
+
+  insightTitle: {
+    margin: "10px 0 0",
+    fontSize: "30px",
+    color: "#0f172a",
+  },
+
+  insightGrid: {
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit,minmax(220px,1fr))",
+    gap: "18px",
+  },
+
+  insightCard: {
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "22px",
+    boxShadow:
+      "0 8px 25px rgba(15,23,42,0.04)",
+  },
+
+  insightIcon: {
+    fontSize: "28px",
+    marginBottom: "10px",
+  },
+
+  insightCardTitle: {
+    margin: "0 0 6px",
+    color: "#0f172a",
+  },
+
+  insightNumber: {
+    display: "block",
+    fontSize: "25px",
+    color: "#2563eb",
+    marginBottom: "8px",
+  },
+
+  insightText: {
+    margin: 0,
+    color: "#64748b",
+    fontSize: "13px",
+    lineHeight: "1.6",
+  },
+
+  /* ================= INFO ================= */
+
   info: {
-    maxWidth: "1035px",
-    margin: "25px auto 0",
+    maxWidth: "1050px",
+    margin: "35px auto 0",
     padding: "25px",
     display: "flex",
     alignItems: "center",
@@ -768,6 +1412,57 @@ const styles = {
     lineHeight: "1.6",
   },
 
+  /* ================= LOGIN ================= */
+
+  loginPage: {
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "30px",
+    background:
+      "linear-gradient(135deg,#eff6ff,#faf5ff,#fdf2f8)",
+  },
+
+  loginCard: {
+    maxWidth: "500px",
+    width: "100%",
+    textAlign: "center",
+    background: "#ffffff",
+    padding: "45px 30px",
+    borderRadius: "25px",
+    border: "1px solid #e2e8f0",
+    boxShadow:
+      "0 20px 50px rgba(15,23,42,0.08)",
+  },
+
+  loginIcon: {
+    fontSize: "50px",
+    marginBottom: "15px",
+  },
+
+  loginTitle: {
+    margin: "0 0 10px",
+    color: "#0f172a",
+    fontSize: "30px",
+  },
+
+  loginText: {
+    color: "#64748b",
+    lineHeight: "1.7",
+    marginBottom: "25px",
+  },
+
+  loginButton: {
+    display: "inline-block",
+    textDecoration: "none",
+    padding: "13px 22px",
+    borderRadius: "12px",
+    background:
+      "linear-gradient(135deg,#2563eb,#7c3aed)",
+    color: "#ffffff",
+    fontWeight: "800",
+  },
 };
 
 export default Progress;

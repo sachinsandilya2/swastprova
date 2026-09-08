@@ -19,6 +19,9 @@ import Contact from "./pages/Contact";
 // AI Mental Health Assessment
 import Assessment from "./pages/Assessment";
 
+// Emergency / Crisis Support
+import EmergencySupport from "./pages/EmergencySupport";
+
 // Authentication
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -87,6 +90,13 @@ function App() {
         <Route
           path="/assessment"
           element={<Assessment />}
+        />
+
+        {/* ================= EMERGENCY / CRISIS SUPPORT ================= */}
+
+        <Route
+          path="/emergency-support"
+          element={<EmergencySupport />}
         />
 
         {/* ================= PROGRESS ================= */}
