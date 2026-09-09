@@ -19,8 +19,14 @@ import Contact from "./pages/Contact";
 // AI Mental Health Assessment
 import Assessment from "./pages/Assessment";
 
+// Voice Mental Health Assessment
+import VoiceAssessment from "./pages/VoiceAssessment";
+
 // Emergency / Crisis Support
 import EmergencySupport from "./pages/EmergencySupport";
+
+// Victim / Witness Protection Support
+import ProtectionSupport from "./pages/ProtectionSupport";
 
 // Authentication
 import Login from "./pages/Login";
@@ -41,7 +47,8 @@ function App() {
   return (
     <BrowserRouter>
 
-      {/* Navbar */}
+      {/* ================= NAVBAR ================= */}
+
       <Navbar />
 
       <Routes>
@@ -85,11 +92,25 @@ function App() {
           element={<LiveChat />}
         />
 
-        {/* ================= AI ASSESSMENT ================= */}
+        {/* ================= AI MENTAL HEALTH ASSESSMENT ================= */}
 
         <Route
           path="/assessment"
           element={<Assessment />}
+        />
+
+        {/* ================= VOICE ASSESSMENT ================= */}
+
+        <Route
+          path="/voice-assessment"
+          element={<VoiceAssessment />}
+        />
+
+        {/* ================= VICTIM / WITNESS PROTECTION ================= */}
+
+        <Route
+          path="/protection-support"
+          element={<ProtectionSupport />}
         />
 
         {/* ================= EMERGENCY / CRISIS SUPPORT ================= */}
@@ -99,24 +120,28 @@ function App() {
           element={<EmergencySupport />}
         />
 
-        {/* ================= PROGRESS ================= */}
+        {/* ================= PROGRESS / MONITORING ================= */}
 
         <Route
           path="/progress"
           element={<Progress />}
         />
 
-        {/* ================= COMMUNITY ================= */}
+        {/* ================= ARTICLES ================= */}
 
         <Route
           path="/articles"
           element={<Articles />}
         />
 
+        {/* ================= COMMUNITY ================= */}
+
         <Route
           path="/community"
           element={<Community />}
         />
+
+        {/* ================= CONTACT ================= */}
 
         <Route
           path="/contact"
@@ -161,7 +186,7 @@ function App() {
           element={<BookSession />}
         />
 
-        {/* ================= ADMIN ================= */}
+        {/* ================= ADMIN DASHBOARD ================= */}
 
         <Route
           path="/admin-dashboard"

@@ -11,6 +11,7 @@ export default function Health() {
       path: "/livechat",
       tag: "AI",
     },
+
     {
       icon: "🧠",
       title: "Mental Health",
@@ -18,6 +19,7 @@ export default function Health() {
       path: "/mental-health",
       tag: "Wellness",
     },
+
     {
       icon: "👨‍⚕️",
       title: "Psychologists",
@@ -25,6 +27,7 @@ export default function Health() {
       path: "/psychologists",
       tag: "Experts",
     },
+
     {
       icon: "🎯",
       title: "Mentorship",
@@ -32,6 +35,7 @@ export default function Health() {
       path: "/mentors",
       tag: "Growth",
     },
+
     {
       icon: "📈",
       title: "Progress",
@@ -39,6 +43,7 @@ export default function Health() {
       path: "/progress",
       tag: "Track",
     },
+
     {
       icon: "📚",
       title: "Articles",
@@ -46,6 +51,7 @@ export default function Health() {
       path: "/articles",
       tag: "Learn",
     },
+
     {
       icon: "🤝",
       title: "Community",
@@ -53,6 +59,25 @@ export default function Health() {
       path: "/community",
       tag: "Connect",
     },
+
+    /* ================= NEW ================= */
+
+    {
+      icon: "🎙️",
+      title: "Voice Assessment",
+      desc: "Record your voice to screen stress, distress indicators and emotional patterns.",
+      path: "/voice-assessment",
+      tag: "Voice AI",
+    },
+
+    {
+      icon: "🛡️",
+      title: "Protection Support",
+      desc: "Access victim and witness protection, legal assistance, relocation and safety support.",
+      path: "/protection-support",
+      tag: "Safety",
+    },
+
     {
       icon: "🚨",
       title: "Emergency Support",
@@ -60,6 +85,7 @@ export default function Health() {
       path: "/emergency-support",
       tag: "Emergency",
     },
+
     {
       icon: "📞",
       title: "Contact",
@@ -133,20 +159,20 @@ export default function Health() {
         </div>
 
         <div style={styles.infoCard}>
-          <span style={styles.infoCardIcon}>🎯</span>
+          <span style={styles.infoCardIcon}>🎙️</span>
 
           <div>
-            <strong>Personal Growth</strong>
-            <small>Build better habits</small>
+            <strong>Voice Screening</strong>
+            <small>Check distress indicators</small>
           </div>
         </div>
 
         <div style={styles.infoCard}>
-          <span style={styles.infoCardIcon}>🤝</span>
+          <span style={styles.infoCardIcon}>🛡️</span>
 
           <div>
-            <strong>Human Support</strong>
-            <small>Connect with people</small>
+            <strong>Safety Support</strong>
+            <small>Protection & assistance</small>
           </div>
         </div>
 
@@ -219,7 +245,19 @@ export default function Health() {
 
               {/* ICON */}
 
-              <div style={styles.icon}>
+              <div
+                style={{
+                  ...styles.icon,
+
+                  ...(item.title === "Voice Assessment"
+                    ? styles.voiceIcon
+                    : {}),
+
+                  ...(item.title === "Protection Support"
+                    ? styles.protectionIcon
+                    : {}),
+                }}
+              >
                 {item.icon}
               </div>
 
@@ -251,6 +289,90 @@ export default function Health() {
             </div>
 
           ))}
+
+        </div>
+
+      </section>
+
+
+      {/* ================= SPECIAL ASSESSMENT CTA ================= */}
+
+      <section style={styles.assessmentSection}>
+
+        <div style={styles.assessmentBox}>
+
+          <div style={styles.micCircle}>
+            🎙️
+          </div>
+
+          <div style={styles.assessmentContent}>
+
+            <span style={styles.assessmentBadge}>
+              NEW • VOICE SCREENING
+            </span>
+
+            <h2 style={styles.assessmentTitle}>
+              Check your stress indicators through voice
+            </h2>
+
+            <p style={styles.assessmentText}>
+              Record a short voice sample and receive
+              a screening summary of voice-related
+              stress and distress indicators.
+            </p>
+
+            <button
+              style={styles.assessmentButton}
+              onClick={() => navigate("/voice-assessment")}
+            >
+              🎙️ Start Voice Assessment
+              <span>→</span>
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ================= PROTECTION CTA ================= */}
+
+      <section style={styles.protectionSection}>
+
+        <div style={styles.protectionBox}>
+
+          <div style={styles.shieldCircle}>
+            🛡️
+          </div>
+
+          <div style={styles.protectionContent}>
+
+            <span style={styles.protectionBadge}>
+              SAFETY & SUPPORT
+            </span>
+
+            <h2 style={styles.protectionTitle}>
+              Need protection or assistance?
+            </h2>
+
+            <p style={styles.protectionText}>
+              Find information about victim and witness
+              protection, legal assistance, safe relocation,
+              counselling and other support pathways.
+            </p>
+
+            <button
+              style={styles.protectionButton}
+              onClick={() =>
+                navigate("/protection-support")
+              }
+            >
+              🛡️ Explore Protection Support
+              <span>→</span>
+            </button>
+
+          </div>
 
         </div>
 
@@ -558,6 +680,28 @@ const styles = {
   },
 
 
+  /* ================= VOICE ICON ================= */
+
+  voiceIcon: {
+    background:
+      "linear-gradient(135deg,#dbeafe,#ede9fe)",
+    fontSize: "34px",
+    boxShadow:
+      "0 8px 20px rgba(79,70,229,0.12)",
+  },
+
+
+  /* ================= PROTECTION ICON ================= */
+
+  protectionIcon: {
+    background:
+      "linear-gradient(135deg,#dcfce7,#dbeafe)",
+    fontSize: "34px",
+    boxShadow:
+      "0 8px 20px rgba(34,197,94,0.12)",
+  },
+
+
   cardTitle: {
     fontSize: "21px",
     margin: "0 0 10px",
@@ -581,6 +725,164 @@ const styles = {
     color: "#2563eb",
     cursor: "pointer",
     fontWeight: "800",
+  },
+
+
+  /* ================= VOICE ASSESSMENT ================= */
+
+  assessmentSection: {
+    padding: "0 7% 50px",
+  },
+
+
+  assessmentBox: {
+    maxWidth: "1100px",
+    margin: "auto",
+    padding: "38px",
+    borderRadius: "26px",
+    background:
+      "linear-gradient(135deg,#eef2ff,#ffffff)",
+    border: "1px solid #c7d2fe",
+    display: "flex",
+    alignItems: "center",
+    gap: "30px",
+    boxShadow:
+      "0 18px 45px rgba(79,70,229,0.08)",
+    boxSizing: "border-box",
+  },
+
+
+  micCircle: {
+    width: "90px",
+    height: "90px",
+    minWidth: "90px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background:
+      "linear-gradient(135deg,#4f46e5,#7c3aed)",
+    fontSize: "42px",
+    boxShadow:
+      "0 15px 30px rgba(79,70,229,0.25)",
+  },
+
+
+  assessmentContent: {
+    flex: 1,
+  },
+
+
+  assessmentBadge: {
+    fontSize: "11px",
+    fontWeight: "900",
+    letterSpacing: "1.5px",
+    color: "#4f46e5",
+  },
+
+
+  assessmentTitle: {
+    margin: "8px 0 10px",
+    fontSize: "clamp(24px,3vw,34px)",
+  },
+
+
+  assessmentText: {
+    color: "#64748b",
+    lineHeight: "1.7",
+    maxWidth: "720px",
+    marginBottom: "20px",
+  },
+
+
+  assessmentButton: {
+    padding: "13px 20px",
+    border: "none",
+    borderRadius: "12px",
+    background: "#4f46e5",
+    color: "#ffffff",
+    cursor: "pointer",
+    fontWeight: "800",
+    fontSize: "14px",
+  },
+
+
+  /* ================= PROTECTION ================= */
+
+  protectionSection: {
+    padding: "0 7% 70px",
+  },
+
+
+  protectionBox: {
+    maxWidth: "1100px",
+    margin: "auto",
+    padding: "38px",
+    borderRadius: "26px",
+    background:
+      "linear-gradient(135deg,#f0fdf4,#ffffff)",
+    border: "1px solid #bbf7d0",
+    display: "flex",
+    alignItems: "center",
+    gap: "30px",
+    boxShadow:
+      "0 18px 45px rgba(22,163,74,0.07)",
+    boxSizing: "border-box",
+  },
+
+
+  shieldCircle: {
+    width: "90px",
+    height: "90px",
+    minWidth: "90px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background:
+      "linear-gradient(135deg,#16a34a,#2563eb)",
+    fontSize: "42px",
+    boxShadow:
+      "0 15px 30px rgba(22,163,74,0.20)",
+  },
+
+
+  protectionContent: {
+    flex: 1,
+  },
+
+
+  protectionBadge: {
+    fontSize: "11px",
+    fontWeight: "900",
+    letterSpacing: "1.5px",
+    color: "#16a34a",
+  },
+
+
+  protectionTitle: {
+    margin: "8px 0 10px",
+    fontSize: "clamp(24px,3vw,34px)",
+  },
+
+
+  protectionText: {
+    color: "#64748b",
+    lineHeight: "1.7",
+    maxWidth: "720px",
+    marginBottom: "20px",
+  },
+
+
+  protectionButton: {
+    padding: "13px 20px",
+    border: "none",
+    borderRadius: "12px",
+    background: "#16a34a",
+    color: "#ffffff",
+    cursor: "pointer",
+    fontWeight: "800",
+    fontSize: "14px",
   },
 
 
