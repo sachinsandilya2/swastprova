@@ -69,7 +69,9 @@ const OTP = () => {
     }
 
     if (!/^\d{6}$/.test(otp)) {
-      setError("Please enter a valid 6-digit OTP.");
+      setError(
+        "Please enter a valid 6-digit OTP."
+      );
       return;
     }
 
@@ -94,7 +96,8 @@ const OTP = () => {
         }
       );
 
-      const responseText = await response.text();
+      const responseText =
+        await response.text();
 
       let data;
 
@@ -108,7 +111,8 @@ const OTP = () => {
 
       if (!response.ok || !data.success) {
         throw new Error(
-          data.message || "Invalid or expired OTP."
+          data.message ||
+            "Invalid or expired OTP."
         );
       }
 
@@ -116,7 +120,8 @@ const OTP = () => {
       // CHECK FIREBASE USER
       // ==========================================
 
-      const firebaseUser = auth.currentUser;
+      const firebaseUser =
+        auth.currentUser;
 
       if (firebaseUser) {
         console.log(
@@ -173,7 +178,8 @@ const OTP = () => {
       setTimeout(() => {
         navigate("/login", {
           state: {
-            email: email.trim().toLowerCase(),
+            email:
+              email.trim().toLowerCase(),
             registered: true,
           },
         });
@@ -223,12 +229,14 @@ const OTP = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            email: email.trim().toLowerCase(),
+            email:
+              email.trim().toLowerCase(),
           }),
         }
       );
 
-      const responseText = await response.text();
+      const responseText =
+        await response.text();
 
       let data;
 
@@ -285,30 +293,53 @@ const OTP = () => {
   };
 
   return (
-    <div style={styles.page}>
-
+    <div
+      style={styles.page}
+      className="otp-page"
+    >
       {/* BACKGROUND */}
 
       <div style={styles.circleOne}></div>
       <div style={styles.circleTwo}></div>
 
-      <div style={styles.card}>
+      {/* =========================
+          OTP CARD
+      ========================= */}
 
+      <div
+        style={styles.card}
+        className="otp-card"
+      >
         {/* LOGO */}
 
-        <div style={styles.logo}>
+        <div
+          style={styles.logo}
+          className="otp-logo"
+        >
           🌱
         </div>
 
-        <h1 style={styles.title}>
+        {/* TITLE */}
+
+        <h1
+          style={styles.title}
+          className="otp-title"
+        >
           Verify Your Email
         </h1>
 
-        <p style={styles.subtitle}>
-          We've sent a 6-digit verification code to
+        <p
+          style={styles.subtitle}
+          className="otp-subtitle"
+        >
+          We've sent a 6-digit verification
+          code to
         </p>
 
-        <div style={styles.email}>
+        <div
+          style={styles.email}
+          className="otp-email"
+        >
           {email || "your email"}
         </div>
 
@@ -317,8 +348,12 @@ const OTP = () => {
         <form
           onSubmit={handleVerifyOTP}
           style={styles.form}
+          className="otp-form"
         >
-          <label style={styles.label}>
+          <label
+            style={styles.label}
+            className="otp-label"
+          >
             Enter OTP
           </label>
 
@@ -331,28 +366,41 @@ const OTP = () => {
             placeholder="000000"
             onChange={(e) => {
               const value =
-                e.target.value.replace(/\D/g, "");
+                e.target.value.replace(
+                  /\D/g,
+                  ""
+                );
 
               setOtp(value);
               setError("");
               setMessage("");
             }}
             style={styles.otpInput}
+            className="otp-input"
+            autoComplete="one-time-code"
           />
 
           {/* ERROR */}
 
           {error && (
-            <div style={styles.error}>
-              ⚠️ {error}
+            <div
+              style={styles.error}
+              className="otp-message"
+            >
+              <span>⚠️</span>
+              <span>{error}</span>
             </div>
           )}
 
           {/* SUCCESS */}
 
           {message && (
-            <div style={styles.success}>
-              ✓ {message}
+            <div
+              style={styles.success}
+              className="otp-message"
+            >
+              <span>✓</span>
+              <span>{message}</span>
             </div>
           )}
 
@@ -377,6 +425,7 @@ const OTP = () => {
                   ? "not-allowed"
                   : "pointer",
             }}
+            className="otp-verify-button"
           >
             {loading
               ? "Verifying..."
@@ -386,14 +435,19 @@ const OTP = () => {
 
         {/* RESEND */}
 
-        <div style={styles.resendArea}>
+        <div
+          style={styles.resendArea}
+          className="otp-resend-area"
+        >
           {timer > 0 ? (
             <p style={styles.timerText}>
               Resend OTP{" "}
-              in{" "}
-              <strong>
-                {timer}s
-              </strong>
+              <span className="otp-timer">
+                in{" "}
+                <strong>
+                  {timer}s
+                </strong>
+              </span>
             </p>
           ) : (
             <button
@@ -401,6 +455,7 @@ const OTP = () => {
               onClick={handleResendOTP}
               disabled={resending}
               style={styles.resendButton}
+              className="otp-resend-button"
             >
               {resending
                 ? "Sending..."
@@ -415,19 +470,239 @@ const OTP = () => {
           type="button"
           onClick={handleBack}
           style={styles.backButton}
+          className="otp-back-button"
         >
           ← Back to Registration
         </button>
 
         {/* SECURITY */}
 
-        <div style={styles.info}>
+        <div
+          style={styles.info}
+          className="otp-info"
+        >
           🔒 Your verification code is private.
           <br />
           Never share your OTP with anyone.
         </div>
-
       </div>
+
+      {/* =========================
+          RESPONSIVE CSS
+      ========================= */}
+
+      <style>{`
+        * {
+          box-sizing: border-box;
+        }
+
+        html,
+        body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+        }
+
+        button,
+        input {
+          font-family: inherit;
+        }
+
+        .otp-input {
+          transition:
+            border-color 0.2s ease,
+            background 0.2s ease,
+            box-shadow 0.2s ease;
+        }
+
+        .otp-input:focus {
+          border-color: #2563eb !important;
+          background: #ffffff !important;
+          box-shadow:
+            0 0 0 3px rgba(37, 99, 235, 0.08);
+        }
+
+        .otp-verify-button:not(:disabled),
+        .otp-resend-button:not(:disabled),
+        .otp-back-button {
+          transition:
+            transform 0.2s ease,
+            opacity 0.2s ease;
+        }
+
+        .otp-verify-button:not(:disabled):active {
+          transform: scale(0.98);
+        }
+
+        .otp-resend-button:not(:disabled):hover {
+          opacity: 0.75;
+        }
+
+        .otp-back-button:hover {
+          color: #2563eb !important;
+        }
+
+        @media (max-width: 600px) {
+          .otp-page {
+            min-height: 100vh !important;
+            min-height: 100dvh !important;
+            padding: 18px 12px !important;
+            align-items: center !important;
+          }
+
+          .otp-card {
+            width: 100% !important;
+            max-width: 480px !important;
+            padding: 30px 22px 24px !important;
+            border-radius: 22px !important;
+          }
+
+          .otp-logo {
+            width: 62px !important;
+            height: 62px !important;
+            border-radius: 19px !important;
+            font-size: 29px !important;
+            margin-bottom: 18px !important;
+          }
+
+          .otp-title {
+            font-size: 26px !important;
+            line-height: 1.2 !important;
+          }
+
+          .otp-subtitle {
+            font-size: 13px !important;
+          }
+
+          .otp-email {
+            font-size: 13px !important;
+            margin-bottom: 25px !important;
+          }
+
+          .otp-form {
+            gap: 12px !important;
+          }
+
+          .otp-label {
+            font-size: 12px !important;
+          }
+
+          .otp-input {
+            min-height: 54px !important;
+            padding: 13px 8px !important;
+            font-size: 24px !important;
+            letter-spacing: 8px !important;
+            border-radius: 12px !important;
+          }
+
+          .otp-verify-button {
+            min-height: 49px !important;
+            border-radius: 12px !important;
+            padding: 13px !important;
+            font-size: 14px !important;
+          }
+
+          .otp-message {
+            font-size: 12px !important;
+            padding: 10px 11px !important;
+          }
+
+          .otp-resend-area {
+            margin-top: 19px !important;
+          }
+
+          .otp-back-button {
+            margin-top: 16px !important;
+            font-size: 12px !important;
+          }
+
+          .otp-info {
+            margin-top: 21px !important;
+            padding: 10px !important;
+            font-size: 10px !important;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .otp-page {
+            padding: 12px 8px !important;
+          }
+
+          .otp-card {
+            padding: 25px 16px 20px !important;
+            border-radius: 19px !important;
+          }
+
+          .otp-logo {
+            width: 54px !important;
+            height: 54px !important;
+            border-radius: 16px !important;
+            font-size: 25px !important;
+            margin-bottom: 15px !important;
+          }
+
+          .otp-title {
+            font-size: 23px !important;
+          }
+
+          .otp-subtitle {
+            font-size: 12px !important;
+            line-height: 1.5 !important;
+          }
+
+          .otp-email {
+            font-size: 12px !important;
+            margin-top: 7px !important;
+            margin-bottom: 22px !important;
+          }
+
+          .otp-input {
+            min-height: 51px !important;
+            font-size: 22px !important;
+            letter-spacing: 7px !important;
+          }
+
+          .otp-verify-button {
+            min-height: 47px !important;
+            font-size: 13px !important;
+          }
+
+          .otp-timer {
+            font-size: 12px !important;
+          }
+
+          .otp-resend-button {
+            font-size: 12px !important;
+          }
+        }
+
+        @media (max-width: 350px) {
+          .otp-card {
+            padding: 22px 13px 18px !important;
+          }
+
+          .otp-title {
+            font-size: 21px !important;
+          }
+
+          .otp-subtitle {
+            font-size: 11.5px !important;
+          }
+
+          .otp-email {
+            font-size: 11.5px !important;
+          }
+
+          .otp-input {
+            font-size: 20px !important;
+            letter-spacing: 6px !important;
+          }
+
+          .otp-info {
+            font-size: 9.5px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
@@ -461,6 +736,7 @@ const styles = {
       "rgba(37,99,235,0.10)",
     top: "-180px",
     left: "-150px",
+    pointerEvents: "none",
   },
 
   circleTwo: {
@@ -472,6 +748,7 @@ const styles = {
       "rgba(236,72,153,0.10)",
     bottom: "-170px",
     right: "-150px",
+    pointerEvents: "none",
   },
 
   card: {
@@ -523,6 +800,7 @@ const styles = {
     fontSize: "14px",
     fontWeight: "800",
     wordBreak: "break-word",
+    overflowWrap: "anywhere",
   },
 
   form: {
@@ -569,6 +847,9 @@ const styles = {
   },
 
   error: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "7px",
     padding: "11px 13px",
     borderRadius: "10px",
     background: "#fef2f2",
@@ -579,6 +860,9 @@ const styles = {
   },
 
   success: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "7px",
     padding: "11px 13px",
     borderRadius: "10px",
     background: "#f0fdf4",

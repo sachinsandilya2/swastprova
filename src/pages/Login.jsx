@@ -190,21 +190,28 @@ const Login = () => {
   };
 
   return (
-    <div style={styles.page}>
-
+    <div
+      style={styles.page}
+      className="login-page"
+    >
       {/* BACKGROUND */}
 
       <div style={styles.circleOne}></div>
       <div style={styles.circleTwo}></div>
 
-      <div style={styles.container}>
+      <div
+        style={styles.container}
+        className="login-container"
+      >
 
         {/* =========================
             LEFT BRAND PANEL
         ========================= */}
 
-        <div style={styles.brandPanel}>
-
+        <div
+          style={styles.brandPanel}
+          className="login-brand-panel"
+        >
           <div style={styles.brandLogo}>
             🌱
           </div>
@@ -220,16 +227,15 @@ const Login = () => {
           </p>
 
           <div style={styles.quoteBox}>
-
             <div style={styles.quote}>
               “Your wellbeing matters.”
             </div>
 
             <div style={styles.quoteSmall}>
               Take care of your mind.
+              <br />
               Take care of yourself.
             </div>
-
           </div>
 
           <div style={styles.miniFeatures}>
@@ -237,34 +243,46 @@ const Login = () => {
             <span>✓ Private</span>
             <span>✓ Supportive</span>
           </div>
-
         </div>
 
         {/* =========================
             LOGIN CARD
         ========================= */}
 
-        <div style={styles.card}>
+        <div
+          style={styles.card}
+          className="login-card"
+        >
 
           {/* MOBILE LOGO */}
 
-          <div style={styles.mobileLogo}>
+          <div
+            style={styles.mobileLogo}
+            className="login-mobile-logo"
+          >
             🌱
           </div>
 
           {/* HEADING */}
 
-          <div style={styles.heading}>
-
-            <h2 style={styles.headingTitle}>
+          <div
+            style={styles.heading}
+            className="login-heading"
+          >
+            <h2
+              style={styles.headingTitle}
+              className="login-heading-title"
+            >
               Login
             </h2>
 
-            <p style={styles.headingText}>
+            <p
+              style={styles.headingText}
+              className="login-heading-text"
+            >
               Sign in to access your
               Swastprova account.
             </p>
-
           </div>
 
           {/* =========================
@@ -274,19 +292,27 @@ const Login = () => {
           <form
             onSubmit={handleLogin}
             style={styles.form}
+            className="login-form"
           >
 
             {/* EMAIL */}
 
             <div style={styles.field}>
-
-              <label style={styles.label}>
+              <label
+                style={styles.label}
+                className="login-label"
+              >
                 Email Address
               </label>
 
-              <div style={styles.inputWrapper}>
-
-                <span style={styles.inputIcon}>
+              <div
+                style={styles.inputWrapper}
+                className="login-input-wrapper"
+              >
+                <span
+                  style={styles.inputIcon}
+                  className="login-input-icon"
+                >
                   ✉️
                 </span>
 
@@ -300,24 +326,30 @@ const Login = () => {
                     setMessage("");
                   }}
                   style={styles.input}
+                  className="login-input"
                   autoComplete="email"
                 />
-
               </div>
-
             </div>
 
             {/* PASSWORD */}
 
             <div style={styles.field}>
-
-              <label style={styles.label}>
+              <label
+                style={styles.label}
+                className="login-label"
+              >
                 Password
               </label>
 
-              <div style={styles.inputWrapper}>
-
-                <span style={styles.inputIcon}>
+              <div
+                style={styles.inputWrapper}
+                className="login-input-wrapper"
+              >
+                <span
+                  style={styles.inputIcon}
+                  className="login-input-icon"
+                >
                   🔒
                 </span>
 
@@ -335,6 +367,7 @@ const Login = () => {
                     setMessage("");
                   }}
                   style={styles.input}
+                  className="login-input"
                   autoComplete="current-password"
                 />
 
@@ -346,20 +379,27 @@ const Login = () => {
                     )
                   }
                   style={styles.eyeButton}
+                  className="login-eye-button"
+                  aria-label={
+                    showPassword
+                      ? "Hide password"
+                      : "Show password"
+                  }
                 >
                   {showPassword
                     ? "🙈"
                     : "👁️"}
                 </button>
-
               </div>
-
             </div>
 
             {/* ERROR */}
 
             {error && (
-              <div style={styles.error}>
+              <div
+                style={styles.error}
+                className="login-message"
+              >
                 <span>⚠️</span>
                 <span>{error}</span>
               </div>
@@ -368,7 +408,10 @@ const Login = () => {
             {/* SUCCESS */}
 
             {message && (
-              <div style={styles.success}>
+              <div
+                style={styles.success}
+                className="login-message"
+              >
                 <span>✓</span>
                 <span>{message}</span>
               </div>
@@ -386,20 +429,22 @@ const Login = () => {
                   ? "not-allowed"
                   : "pointer",
               }}
+              className="login-primary-button"
             >
               {loading
                 ? "Signing in..."
                 : "Login →"}
             </button>
-
           </form>
 
           {/* =========================
               REGISTER
           ========================= */}
 
-          <div style={styles.registerArea}>
-
+          <div
+            style={styles.registerArea}
+            className="login-register-area"
+          >
             <span>
               Don't have an account?
             </span>
@@ -408,21 +453,237 @@ const Login = () => {
               type="button"
               onClick={handleRegister}
               style={styles.registerButton}
+              className="login-register-button"
             >
               Create Account
             </button>
-
           </div>
 
           {/* INFO */}
 
-          <div style={styles.info}>
+          <div
+            style={styles.info}
+            className="login-info"
+          >
             🔐 Your account is securely
             protected by Firebase.
           </div>
-
         </div>
       </div>
+
+      {/* =========================
+          RESPONSIVE CSS
+      ========================= */}
+
+      <style>{`
+        * {
+          box-sizing: border-box;
+        }
+
+        html,
+        body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+        }
+
+        button,
+        input {
+          font-family: inherit;
+        }
+
+        .login-input-wrapper {
+          transition:
+            border-color 0.2s ease,
+            background 0.2s ease,
+            box-shadow 0.2s ease;
+        }
+
+        .login-input-wrapper:focus-within {
+          border-color: #2563eb !important;
+          background: #ffffff !important;
+          box-shadow:
+            0 0 0 3px rgba(37, 99, 235, 0.08);
+        }
+
+        @media (max-width: 900px) {
+          .login-container {
+            max-width: 760px !important;
+          }
+
+          .login-brand-panel {
+            padding: 40px 30px !important;
+          }
+
+          .login-card {
+            padding: 35px 30px !important;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .login-page {
+            min-height: 100vh !important;
+            min-height: 100dvh !important;
+            padding: 20px 12px !important;
+            align-items: flex-start !important;
+          }
+
+          .login-container {
+            display: block !important;
+            width: 100% !important;
+            max-width: 520px !important;
+            margin: 10px auto !important;
+            border-radius: 22px !important;
+          }
+
+          .login-brand-panel {
+            display: none !important;
+          }
+
+          .login-card {
+            width: 100% !important;
+            min-height: auto !important;
+            padding: 30px 20px 24px !important;
+            border-radius: 22px !important;
+          }
+
+          .login-mobile-logo {
+            display: flex !important;
+          }
+
+          .login-heading {
+            margin-bottom: 22px !important;
+          }
+
+          .login-heading-title {
+            font-size: 27px !important;
+          }
+
+          .login-heading-text {
+            font-size: 13px !important;
+          }
+
+          .login-form {
+            gap: 15px !important;
+          }
+
+          .login-input-wrapper {
+            min-height: 49px !important;
+            border-radius: 12px !important;
+          }
+
+          .login-input {
+            font-size: 14px !important;
+            padding: 12px 8px !important;
+          }
+
+          .login-primary-button {
+            min-height: 49px !important;
+            font-size: 14px !important;
+          }
+
+          .login-register-area {
+            margin-top: 20px !important;
+            padding-top: 17px !important;
+          }
+
+          .login-info {
+            margin-top: 15px !important;
+            font-size: 10.5px !important;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .login-page {
+            padding: 12px 8px !important;
+          }
+
+          .login-container {
+            margin: 4px auto !important;
+            border-radius: 18px !important;
+          }
+
+          .login-card {
+            padding: 24px 16px 20px !important;
+            border-radius: 18px !important;
+          }
+
+          .login-mobile-logo {
+            width: 52px !important;
+            height: 52px !important;
+            font-size: 25px !important;
+            border-radius: 16px !important;
+            margin-bottom: 15px !important;
+          }
+
+          .login-heading-title {
+            font-size: 24px !important;
+          }
+
+          .login-heading-text {
+            font-size: 12.5px !important;
+          }
+
+          .login-label {
+            font-size: 12px !important;
+          }
+
+          .login-input-wrapper {
+            min-height: 47px !important;
+          }
+
+          .login-input-icon {
+            padding-left: 11px !important;
+            font-size: 14px !important;
+          }
+
+          .login-input {
+            font-size: 13px !important;
+            padding: 11px 7px !important;
+          }
+
+          .login-eye-button {
+            padding: 7px 10px !important;
+            font-size: 14px !important;
+          }
+
+          .login-message {
+            font-size: 11.5px !important;
+            padding: 9px 10px !important;
+          }
+
+          .login-register-area {
+            font-size: 12px !important;
+          }
+
+          .login-register-button {
+            font-size: 12px !important;
+          }
+
+          .login-info {
+            padding: 9px 7px !important;
+            font-size: 10px !important;
+          }
+        }
+
+        @media (max-width: 350px) {
+          .login-card {
+            padding: 21px 13px 18px !important;
+          }
+
+          .login-heading-title {
+            font-size: 22px !important;
+          }
+
+          .login-input {
+            font-size: 12.5px !important;
+          }
+
+          .login-primary-button {
+            font-size: 13px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
@@ -456,6 +717,7 @@ const styles = {
       "rgba(37,99,235,0.10)",
     top: "-180px",
     left: "-150px",
+    pointerEvents: "none",
   },
 
   circleTwo: {
@@ -467,6 +729,7 @@ const styles = {
       "rgba(236,72,153,0.10)",
     bottom: "-170px",
     right: "-150px",
+    pointerEvents: "none",
   },
 
   container: {
@@ -551,7 +814,8 @@ const styles = {
 
   card: {
     padding: "45px",
-    background: "rgba(255,255,255,0.97)",
+    background:
+      "rgba(255,255,255,0.97)",
     minHeight: "580px",
     boxSizing: "border-box",
     display: "flex",
@@ -561,6 +825,15 @@ const styles = {
 
   mobileLogo: {
     display: "none",
+    width: "58px",
+    height: "58px",
+    borderRadius: "18px",
+    background:
+      "linear-gradient(135deg,#eff6ff,#f5f3ff)",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "28px",
+    marginBottom: "18px",
   },
 
   heading: {
@@ -615,6 +888,7 @@ const styles = {
   input: {
     flex: 1,
     minWidth: 0,
+    width: "100%",
     border: "none",
     outline: "none",
     background: "transparent",
@@ -629,6 +903,7 @@ const styles = {
     cursor: "pointer",
     padding: "8px 12px",
     fontSize: "15px",
+    flexShrink: 0,
   },
 
   primaryButton: {
@@ -642,6 +917,7 @@ const styles = {
     fontWeight: "800",
     boxShadow:
       "0 10px 25px rgba(37,99,235,0.20)",
+    width: "100%",
   },
 
   error: {
@@ -653,6 +929,7 @@ const styles = {
     color: "#b91c1c",
     fontSize: "13px",
     fontWeight: "600",
+    alignItems: "flex-start",
   },
 
   success: {
@@ -664,13 +941,15 @@ const styles = {
     color: "#15803d",
     fontSize: "13px",
     fontWeight: "600",
+    alignItems: "flex-start",
   },
 
   registerArea: {
     textAlign: "center",
     marginTop: "25px",
     paddingTop: "20px",
-    borderTop: "1px solid #e2e8f0",
+    borderTop:
+      "1px solid #e2e8f0",
     color: "#64748b",
     fontSize: "13px",
   },

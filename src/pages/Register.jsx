@@ -21,9 +21,7 @@ const Register = () => {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState(false);
-
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -48,12 +46,7 @@ const Register = () => {
     setError("");
     setMessage("");
 
-    const {
-      name,
-      email,
-      password,
-      confirmPassword,
-    } = formData;
+    const { name, email, password, confirmPassword } = formData;
 
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
@@ -98,19 +91,15 @@ const Register = () => {
 
       console.log("🔥 Creating Firebase account...");
 
-      const userCredential =
-        await createUserWithEmailAndPassword(
-          auth,
-          cleanEmail,
-          password
-        );
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        cleanEmail,
+        password
+      );
 
       const user = userCredential.user;
 
-      console.log(
-        "✅ Firebase account created:",
-        user.uid
-      );
+      console.log("✅ Firebase account created:", user.uid);
 
       // ==========================================
       // 2. SAVE USER NAME IN FIREBASE
@@ -128,20 +117,17 @@ const Register = () => {
 
       console.log("📧 Sending verification OTP...");
 
-      const response = await fetch(
-        `${API_URL}/register/send-otp`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: cleanName,
-            email: cleanEmail,
-            password,
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/register/send-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: cleanName,
+          email: cleanEmail,
+          password,
+        }),
+      });
 
       const responseText = await response.text();
 
@@ -150,15 +136,11 @@ const Register = () => {
       try {
         data = JSON.parse(responseText);
       } catch {
-        throw new Error(
-          "Server returned an invalid response."
-        );
+        throw new Error("Server returned an invalid response.");
       }
 
       if (!response.ok || !data.success) {
-        throw new Error(
-          data.message || "Unable to send OTP."
-        );
+        throw new Error(data.message || "Unable to send OTP.");
       }
 
       console.log("✅ OTP sent successfully");
@@ -245,7 +227,6 @@ const Register = () => {
       <div style={styles.circleTwo}></div>
 
       <div style={styles.container}>
-
         {/* ======================================
             BRAND PANEL
         ====================================== */}
@@ -301,7 +282,6 @@ const Register = () => {
             onSubmit={handleSubmit}
             style={styles.form}
           >
-
             {/* FULL NAME */}
 
             <div style={styles.field}>
@@ -363,11 +343,7 @@ const Register = () => {
                 </span>
 
                 <input
-                  type={
-                    showPassword
-                      ? "text"
-                      : "password"
-                  }
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Create a password"
                   value={formData.password}
@@ -379,15 +355,16 @@ const Register = () => {
                 <button
                   type="button"
                   onClick={() =>
-                    setShowPassword(
-                      (prev) => !prev
-                    )
+                    setShowPassword((prev) => !prev)
                   }
                   style={styles.eyeButton}
+                  aria-label={
+                    showPassword
+                      ? "Hide password"
+                      : "Show password"
+                  }
                 >
-                  {showPassword
-                    ? "🙈"
-                    : "👁️"}
+                  {showPassword ? "🙈" : "👁️"}
                 </button>
               </div>
             </div>
@@ -426,10 +403,13 @@ const Register = () => {
                     )
                   }
                   style={styles.eyeButton}
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
                 >
-                  {showConfirmPassword
-                    ? "🙈"
-                    : "👁️"}
+                  {showConfirmPassword ? "🙈" : "👁️"}
                 </button>
               </div>
             </div>
@@ -480,9 +460,7 @@ const Register = () => {
 
             <button
               type="button"
-              onClick={() =>
-                navigate("/login")
-              }
+              onClick={() => navigate("/login")}
               style={styles.loginButton}
             >
               Login
@@ -496,6 +474,209 @@ const Register = () => {
           </div>
         </div>
       </div>
+
+      {/* ======================================
+          RESPONSIVE CSS
+      ====================================== */}
+
+      <style>{`
+        * {
+          box-sizing: border-box;
+        }
+
+        html,
+        body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+        }
+
+        button,
+        input {
+          font-family: inherit;
+        }
+
+        .register-input-wrapper:focus-within {
+          border-color: #2563eb;
+          background: #ffffff;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+        }
+
+        @media (max-width: 900px) {
+          .register-container {
+            max-width: 760px !important;
+          }
+
+          .register-brand-panel {
+            padding: 40px 30px !important;
+          }
+
+          .register-card {
+            padding: 35px 30px !important;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .register-page {
+            min-height: 100vh !important;
+            min-height: 100dvh !important;
+            padding: 20px 12px !important;
+            align-items: flex-start !important;
+          }
+
+          .register-container {
+            display: block !important;
+            width: 100% !important;
+            max-width: 520px !important;
+            border-radius: 22px !important;
+            margin: 10px auto !important;
+          }
+
+          .register-brand-panel {
+            display: none !important;
+          }
+
+          .register-card {
+            width: 100% !important;
+            min-height: auto !important;
+            padding: 28px 20px 24px !important;
+            border-radius: 22px !important;
+          }
+
+          .register-mobile-logo {
+            display: flex !important;
+          }
+
+          .register-heading {
+            margin-bottom: 22px !important;
+          }
+
+          .register-heading-title {
+            font-size: 27px !important;
+          }
+
+          .register-heading-text {
+            font-size: 13px !important;
+          }
+
+          .register-form {
+            gap: 14px !important;
+          }
+
+          .register-input-wrapper {
+            min-height: 49px !important;
+            border-radius: 12px !important;
+          }
+
+          .register-input {
+            font-size: 14px !important;
+            padding: 12px 8px !important;
+          }
+
+          .register-primary-button {
+            min-height: 49px !important;
+            font-size: 14px !important;
+          }
+
+          .register-login-area {
+            margin-top: 19px !important;
+            padding-top: 16px !important;
+          }
+
+          .register-info {
+            margin-top: 15px !important;
+            font-size: 10.5px !important;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .register-page {
+            padding: 12px 8px !important;
+          }
+
+          .register-container {
+            margin: 4px auto !important;
+            border-radius: 18px !important;
+          }
+
+          .register-card {
+            padding: 24px 16px 20px !important;
+            border-radius: 18px !important;
+          }
+
+          .register-mobile-logo {
+            width: 52px !important;
+            height: 52px !important;
+            font-size: 25px !important;
+            border-radius: 16px !important;
+            margin-bottom: 15px !important;
+          }
+
+          .register-heading-title {
+            font-size: 24px !important;
+          }
+
+          .register-heading-text {
+            font-size: 12.5px !important;
+          }
+
+          .register-label {
+            font-size: 12px !important;
+          }
+
+          .register-input-wrapper {
+            min-height: 47px !important;
+          }
+
+          .register-input-icon {
+            padding-left: 11px !important;
+            font-size: 14px !important;
+          }
+
+          .register-input {
+            font-size: 13px !important;
+            padding: 11px 7px !important;
+          }
+
+          .register-eye-button {
+            padding: 7px 10px !important;
+            font-size: 14px !important;
+          }
+
+          .register-error,
+          .register-success {
+            font-size: 11.5px !important;
+            padding: 9px 10px !important;
+          }
+
+          .register-login-area {
+            font-size: 12px !important;
+          }
+
+          .register-info {
+            padding: 9px 7px !important;
+            font-size: 10px !important;
+          }
+        }
+
+        @media (max-width: 350px) {
+          .register-card {
+            padding: 21px 13px 18px !important;
+          }
+
+          .register-heading-title {
+            font-size: 22px !important;
+          }
+
+          .register-input {
+            font-size: 12.5px !important;
+          }
+
+          .register-primary-button {
+            font-size: 13px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
@@ -525,10 +706,10 @@ const styles = {
     width: "420px",
     height: "420px",
     borderRadius: "50%",
-    background:
-      "rgba(37,99,235,0.10)",
+    background: "rgba(37,99,235,0.10)",
     top: "-180px",
     left: "-150px",
+    pointerEvents: "none",
   },
 
   circleTwo: {
@@ -536,18 +717,17 @@ const styles = {
     width: "400px",
     height: "400px",
     borderRadius: "50%",
-    background:
-      "rgba(236,72,153,0.10)",
+    background: "rgba(236,72,153,0.10)",
     bottom: "-170px",
     right: "-150px",
+    pointerEvents: "none",
   },
 
   container: {
     width: "100%",
     maxWidth: "1050px",
     display: "grid",
-    gridTemplateColumns:
-      "1fr 1fr",
+    gridTemplateColumns: "1fr 1fr",
     borderRadius: "30px",
     overflow: "hidden",
     boxShadow:
@@ -570,8 +750,7 @@ const styles = {
     width: "70px",
     height: "70px",
     borderRadius: "22px",
-    background:
-      "rgba(255,255,255,0.18)",
+    background: "rgba(255,255,255,0.18)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -595,8 +774,7 @@ const styles = {
   quoteBox: {
     padding: "22px",
     borderRadius: "18px",
-    background:
-      "rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.12)",
     border:
       "1px solid rgba(255,255,255,0.18)",
     marginBottom: "30px",
@@ -624,8 +802,7 @@ const styles = {
 
   card: {
     padding: "45px",
-    background:
-      "rgba(255,255,255,0.97)",
+    background: "rgba(255,255,255,0.97)",
     minHeight: "620px",
     boxSizing: "border-box",
     display: "flex",
@@ -635,6 +812,15 @@ const styles = {
 
   mobileLogo: {
     display: "none",
+    width: "58px",
+    height: "58px",
+    borderRadius: "18px",
+    background:
+      "linear-gradient(135deg,#eff6ff,#f5f3ff)",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "28px",
+    marginBottom: "18px",
   },
 
   heading: {
@@ -676,8 +862,7 @@ const styles = {
   inputWrapper: {
     display: "flex",
     alignItems: "center",
-    border:
-      "1px solid #dbe2ea",
+    border: "1px solid #dbe2ea",
     borderRadius: "13px",
     background: "#f8fafc",
     transition: "0.2s",
@@ -691,6 +876,7 @@ const styles = {
   input: {
     flex: 1,
     minWidth: 0,
+    width: "100%",
     border: "none",
     outline: "none",
     background: "transparent",
@@ -705,6 +891,7 @@ const styles = {
     cursor: "pointer",
     padding: "8px 12px",
     fontSize: "15px",
+    flexShrink: 0,
   },
 
   primaryButton: {
@@ -718,6 +905,7 @@ const styles = {
     fontWeight: "800",
     boxShadow:
       "0 10px 25px rgba(37,99,235,0.20)",
+    width: "100%",
   },
 
   error: {
@@ -729,6 +917,7 @@ const styles = {
     color: "#b91c1c",
     fontSize: "13px",
     fontWeight: "600",
+    alignItems: "flex-start",
   },
 
   success: {
@@ -740,14 +929,14 @@ const styles = {
     color: "#15803d",
     fontSize: "13px",
     fontWeight: "600",
+    alignItems: "flex-start",
   },
 
   loginArea: {
     textAlign: "center",
     marginTop: "22px",
     paddingTop: "18px",
-    borderTop:
-      "1px solid #e2e8f0",
+    borderTop: "1px solid #e2e8f0",
     color: "#64748b",
     fontSize: "13px",
   },
