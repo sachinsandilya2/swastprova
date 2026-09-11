@@ -2,17 +2,20 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
+import multer from "multer";
 
-import { askGemini, generateSVIInsight } from "./gemini.js";
+import {
+  askGemini,
+  generateSVIInsight,
+  analyzeVoiceWithGemini,
+} from "./gemini.js";
 
 import { analyzeAssessment } from "./services/assessmentAI.js";
-
 import { calculateSVI } from "./services/sviEngine.js";
 
 dotenv.config();
 
 const app = express();
-
 const PORT = process.env.PORT || 5000;
 
 /* =========================================================
@@ -39,7 +42,6 @@ app.use(
       }
 
       console.log("CORS blocked origin:", origin);
-
       return callback(new Error("Not allowed by CORS"));
     },
 
@@ -62,6 +64,51 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 
 /* =========================================================
+   MULTER - VOICE AUDIO UPLOAD
+========================================================= */
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+
+  limits: {
+    fileSize: 15 * 1024 * 1024, // 15 MB
+  },
+
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = [
+      "audio/webm",
+      "audio/ogg",
+      "audio/wav",
+      "audio/x-wav",
+      "audio/mpeg",
+      "audio/mp3",
+      "audio/mp4",
+      "audio/m4a",
+    ];
+
+    const baseMimeType = String(file.mimetype || "")
+      .split(";")[0]
+      .trim()
+      .toLowerCase();
+
+    if (allowedMimeTypes.includes(baseMimeType)) {
+      cb(null, true);
+    } else {
+      console.log(
+        "Unsupported audio type:",
+        file.mimetype
+      );
+
+      cb(
+        new Error(
+          `Unsupported audio format: ${file.mimetype}`
+        )
+      );
+    }
+  },
+});
+
+/* =========================================================
    ENVIRONMENT CHECK
 ========================================================= */
 
@@ -71,22 +118,29 @@ console.log("=================================");
 
 console.log(
   "GEMINI_API_KEY:",
-  process.env.GEMINI_API_KEY ? "Loaded" : "Missing"
+  process.env.GEMINI_API_KEY
+    ? "Loaded"
+    : "Missing"
 );
 
 console.log(
   "EMAIL_USER:",
-  process.env.EMAIL_USER ? "Loaded" : "Missing"
+  process.env.EMAIL_USER
+    ? "Loaded"
+    : "Missing"
 );
 
 console.log(
   "EMAIL_PASS:",
-  process.env.EMAIL_PASS ? "Loaded" : "Missing"
+  process.env.EMAIL_PASS
+    ? "Loaded"
+    : "Missing"
 );
 
 console.log(
   "ADMIN_EMAIL:",
-  process.env.ADMIN_EMAIL || "swastprova@gmail.com"
+  process.env.ADMIN_EMAIL ||
+    "swastprova@gmail.com"
 );
 
 console.log("PORT:", PORT);
@@ -107,18 +161,19 @@ const createTransporter = () => {
     return null;
   }
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
+  const transporter =
+    nodemailer.createTransport({
+      service: "gmail",
 
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
 
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
-  });
+      connectionTimeout: 30000,
+      greetingTimeout: 30000,
+      socketTimeout: 30000,
+    });
 
   return transporter;
 };
@@ -170,7 +225,6 @@ const getAdminEmail = () => {
 ========================================================= */
 
 const loginOTPs = new Map();
-
 const registerOTPs = new Map();
 
 /* =========================================================
@@ -237,14 +291,12 @@ app.post("/login", async (req, res) => {
 
     loginOTPs.set(normalizedEmail, {
       otp,
-
       expiresAt:
         Date.now() + 5 * 60 * 1000,
     });
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
-
       to: normalizedEmail,
 
       subject:
@@ -271,7 +323,6 @@ SWASTPROVA Team
           border:1px solid #ddd;
           border-radius:12px;
         ">
-
           <h2>SWASTPROVA Login</h2>
 
           <p>Your login OTP is:</p>
@@ -298,7 +349,6 @@ SWASTPROVA Team
           <hr />
 
           <p>SWASTPROVA Team</p>
-
         </div>
       `,
     });
@@ -312,7 +362,6 @@ SWASTPROVA Team
       message:
         "OTP sent successfully",
     });
-
   } catch (error) {
     console.error(
       "LOGIN OTP ERROR:",
@@ -383,7 +432,6 @@ app.post(
 
       return res.json({
         success: true,
-
         message:
           "Login successful",
 
@@ -391,7 +439,6 @@ app.post(
           email: normalizedEmail,
         },
       });
-
     } catch (error) {
       console.error(
         "VERIFY LOGIN OTP ERROR:",
@@ -448,14 +495,12 @@ app.post(
 
       loginOTPs.set(normalizedEmail, {
         otp,
-
         expiresAt:
           Date.now() + 5 * 60 * 1000,
       });
 
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
-
         to: normalizedEmail,
 
         subject:
@@ -480,7 +525,6 @@ SWASTPROVA Team
             border:1px solid #ddd;
             border-radius:12px;
           ">
-
             <h2>SWASTPROVA</h2>
 
             <p>
@@ -497,7 +541,6 @@ SWASTPROVA Team
               This OTP is valid for
               <strong>5 minutes</strong>.
             </p>
-
           </div>
         `,
       });
@@ -511,7 +554,6 @@ SWASTPROVA Team
         message:
           "New OTP sent successfully",
       });
-
     } catch (error) {
       console.error(
         "RESEND LOGIN OTP ERROR:",
@@ -594,13 +636,9 @@ app.post(
         normalizedEmail,
         {
           otp,
-
           name: name.trim(),
-
           email: normalizedEmail,
-
           password,
-
           expiresAt:
             Date.now() + 5 * 60 * 1000,
         }
@@ -608,7 +646,6 @@ app.post(
 
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
-
         to: normalizedEmail,
 
         subject:
@@ -623,8 +660,7 @@ ${otp}
 
 This OTP is valid for 5 minutes.
 
-If you did not request this registration,
-please ignore this email.
+If you did not request this registration, please ignore this email.
 
 SWASTPROVA Team
         `,
@@ -638,7 +674,6 @@ SWASTPROVA Team
             border:1px solid #ddd;
             border-radius:12px;
           ">
-
             <h2>
               Welcome to SWASTPROVA
             </h2>
@@ -677,7 +712,6 @@ SWASTPROVA Team
             <p>
               SWASTPROVA Team
             </p>
-
           </div>
         `,
       });
@@ -691,7 +725,6 @@ SWASTPROVA Team
         message:
           "Registration OTP sent successfully",
       });
-
     } catch (error) {
       console.error(
         "REGISTER SEND OTP ERROR:",
@@ -769,13 +802,11 @@ app.post(
 
       return res.json({
         success: true,
-
         message:
           "Registration OTP verified successfully",
 
         user: {
           name: record.name,
-
           email: record.email,
 
           // Kept for compatibility
@@ -785,7 +816,6 @@ app.post(
           verified: true,
         },
       });
-
     } catch (error) {
       console.error(
         "REGISTER VERIFY OTP ERROR:",
@@ -863,13 +893,9 @@ app.post(
         normalizedEmail,
         {
           otp,
-
           name: userName,
-
           email: normalizedEmail,
-
           password: userPassword,
-
           expiresAt:
             Date.now() + 5 * 60 * 1000,
         }
@@ -877,7 +903,6 @@ app.post(
 
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
-
         to: normalizedEmail,
 
         subject:
@@ -902,7 +927,6 @@ SWASTPROVA Team
             border:1px solid #ddd;
             border-radius:12px;
           ">
-
             <h2>
               SWASTPROVA Registration
             </h2>
@@ -921,7 +945,6 @@ SWASTPROVA Team
               This OTP is valid for
               <strong>5 minutes</strong>.
             </p>
-
           </div>
         `,
       });
@@ -935,7 +958,6 @@ SWASTPROVA Team
         message:
           "New registration OTP sent successfully",
       });
-
     } catch (error) {
       console.error(
         "REGISTER RESEND OTP ERROR:",
@@ -1003,9 +1025,7 @@ app.post(
 
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
-
         to: adminEmail,
-
         replyTo: normalizedEmail,
 
         subject:
@@ -1019,7 +1039,6 @@ app.post(
             margin:auto;
             padding:20px;
           ">
-
             <h2>
               New Contact Message
             </h2>
@@ -1053,7 +1072,6 @@ app.post(
             <p>
               ${message}
             </p>
-
           </div>
         `,
       });
@@ -1067,7 +1085,6 @@ app.post(
         message:
           "Message sent successfully",
       });
-
     } catch (error) {
       console.error(
         "CONTACT ERROR:",
@@ -1141,9 +1158,7 @@ app.post(
       emailTasks.push(
         transporter.sendMail({
           from: process.env.EMAIL_USER,
-
           to: adminEmail,
-
           replyTo: normalizedEmail,
 
           subject:
@@ -1156,7 +1171,6 @@ app.post(
               margin:auto;
               padding:20px;
             ">
-
               <h2>
                 New Mentor Connection Request
               </h2>
@@ -1190,7 +1204,6 @@ app.post(
               <p>
                 ${message || "No message provided"}
               </p>
-
             </div>
           `,
         })
@@ -1207,9 +1220,7 @@ app.post(
         emailTasks.push(
           transporter.sendMail({
             from: process.env.EMAIL_USER,
-
             to: mentorEmail.trim(),
-
             replyTo: normalizedEmail,
 
             subject:
@@ -1222,7 +1233,6 @@ app.post(
                 margin:auto;
                 padding:20px;
               ">
-
                 <h2>
                   New Mentor Connection Request
                 </h2>
@@ -1255,7 +1265,6 @@ app.post(
                 <p>
                   ${message || "No message provided"}
                 </p>
-
               </div>
             `,
           })
@@ -1267,7 +1276,6 @@ app.post(
       emailTasks.push(
         transporter.sendMail({
           from: process.env.EMAIL_USER,
-
           to: normalizedEmail,
 
           subject:
@@ -1280,7 +1288,6 @@ app.post(
               margin:auto;
               padding:20px;
             ">
-
               <h2>
                 Connection Request Received
               </h2>
@@ -1305,7 +1312,6 @@ app.post(
               <p>
                 SWASTPROVA Team
               </p>
-
             </div>
           `,
         })
@@ -1322,7 +1328,6 @@ app.post(
         message:
           "Mentor connection request sent successfully",
       });
-
     } catch (error) {
       console.error(
         "CONNECT MENTOR ERROR:",
@@ -1478,7 +1483,6 @@ app.post(
             trauma:
               aiResult.trauma,
           });
-
       } catch (aiError) {
         console.error(
           "SVI INSIGHT ERROR:",
@@ -1567,7 +1571,6 @@ app.post(
 
         insight,
       });
-
     } catch (error) {
       console.error(
         "❌ ASSESSMENT ERROR:",
@@ -1576,9 +1579,213 @@ app.post(
 
       return res.status(500).json({
         success: false,
-
         message:
           "Failed to analyze assessment",
+
+        error:
+          process.env.NODE_ENV ===
+          "development"
+            ? error.message
+            : undefined,
+      });
+    }
+  }
+);
+
+/* =========================================================
+   AI VOICE ASSESSMENT - PS-94
+========================================================= */
+
+app.post(
+  "/api/voice-assessment",
+
+  upload.single("audio"),
+
+  async (req, res) => {
+    try {
+      console.log(
+        "================================="
+      );
+
+      console.log(
+        "VOICE ASSESSMENT REQUEST RECEIVED"
+      );
+
+      console.log(
+        "================================="
+      );
+
+      /* -----------------------------------------
+         FILE VALIDATION
+      ----------------------------------------- */
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Audio file is required.",
+        });
+      }
+
+      if (!req.file.buffer) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Audio data could not be read.",
+        });
+      }
+
+      console.log(
+        "Audio MIME:",
+        req.file.mimetype
+      );
+
+      console.log(
+        "Audio size:",
+        req.file.size,
+        "bytes"
+      );
+
+      /* -----------------------------------------
+         MIME NORMALIZATION
+      ----------------------------------------- */
+
+      let mimeType =
+        req.file.mimetype;
+
+      if (
+        mimeType.includes(";")
+      ) {
+        mimeType =
+          mimeType
+            .split(";")[0]
+            .trim();
+      }
+
+      mimeType =
+        mimeType.toLowerCase();
+
+      const supportedAudioTypes = [
+        "audio/webm",
+        "audio/ogg",
+        "audio/wav",
+        "audio/x-wav",
+        "audio/mpeg",
+        "audio/mp3",
+        "audio/mp4",
+        "audio/m4a",
+      ];
+
+      if (
+        !supportedAudioTypes.includes(
+          mimeType
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            `Unsupported audio format: ${mimeType}`,
+        });
+      }
+
+      /* -----------------------------------------
+         GEMINI VOICE ANALYSIS
+      ----------------------------------------- */
+
+      const result =
+        await analyzeVoiceWithGemini({
+          audioBuffer:
+            req.file.buffer,
+
+          mimeType,
+        });
+
+      console.log(
+        "VOICE AI RESULT:",
+        result
+      );
+
+      /* -----------------------------------------
+         FINAL RESPONSE
+      ----------------------------------------- */
+
+      return res.status(200).json({
+        success: true,
+
+        voiceStressScore:
+          Number(
+            result.voiceStressScore ?? 0
+          ),
+
+        distressScore:
+          Number(
+            result.distressScore ?? 0
+          ),
+
+        riskLevel:
+          result.riskLevel ||
+          "Unknown",
+
+        voiceMetrics:
+          result.voiceMetrics ||
+          {},
+
+        indicators:
+          Array.isArray(
+            result.indicators
+          )
+            ? result.indicators
+            : [],
+
+        recommendedSupport:
+          Array.isArray(
+            result.recommendedSupport
+          )
+            ? result.recommendedSupport
+            : [],
+
+        summary:
+          result.summary || "",
+
+        message:
+          result.message || "",
+
+        safetyFlag:
+          Boolean(
+            result.safetyFlag
+          ),
+
+        safetyPriority:
+          result.safetyPriority ||
+          "Normal",
+
+        confidence:
+          result.confidence ||
+          "Low",
+
+        analysisSource:
+          result.analysisSource ||
+          "Gemini AI Voice Screening",
+
+        monitoringType:
+          result.monitoringType ||
+          "PS-94 Dynamic Distress Monitoring",
+
+        disclaimer:
+          result.disclaimer ||
+          "AI-assisted screening only. This is not a medical diagnosis.",
+      });
+    } catch (error) {
+      console.error(
+        "❌ VOICE ASSESSMENT ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+
+        message:
+          "Failed to analyze voice assessment.",
 
         error:
           process.env.NODE_ENV ===
@@ -1629,7 +1836,6 @@ app.post(
         success: true,
         reply: response,
       });
-
     } catch (error) {
       console.error(
         "CHAT ERROR:",
@@ -1750,7 +1956,6 @@ app.post(
 
       const adminMail = {
         from: process.env.EMAIL_USER,
-
         to: adminEmail,
 
         replyTo:
@@ -1766,7 +1971,6 @@ app.post(
             margin:auto;
             padding:20px;
           ">
-
             <h2>
               New SWASTPROVA Session Booking
             </h2>
@@ -1839,7 +2043,6 @@ app.post(
               <strong>Message:</strong>
               ${message || "No message provided"}
             </p>
-
           </div>
         `,
       };
@@ -1850,7 +2053,6 @@ app.post(
 
       const providerMail = {
         from: process.env.EMAIL_USER,
-
         to: normalizedProviderEmail,
 
         replyTo:
@@ -1866,7 +2068,6 @@ app.post(
             margin:auto;
             padding:20px;
           ">
-
             <h2>
               New Session Request
             </h2>
@@ -1930,7 +2131,6 @@ app.post(
               <strong>Message:</strong>
               ${message || "No message provided"}
             </p>
-
           </div>
         `,
       };
@@ -1941,7 +2141,6 @@ app.post(
 
       const customerMail = {
         from: process.env.EMAIL_USER,
-
         to: normalizedCustomerEmail,
 
         subject:
@@ -1954,7 +2153,6 @@ app.post(
             margin:auto;
             padding:20px;
           ">
-
             <h2>
               Session Request Received
             </h2>
@@ -2016,7 +2214,6 @@ app.post(
             <p>
               Thank you for choosing SWASTPROVA.
             </p>
-
           </div>
         `,
       };
@@ -2040,7 +2237,6 @@ app.post(
         message:
           "Session request sent successfully! Confirmation emails have been sent.",
       });
-
     } catch (error) {
       console.error(
         "BOOK APPOINTMENT ERROR:",
@@ -2068,7 +2264,6 @@ app.use(
 
     res.status(404).json({
       success: false,
-
       message:
         `Route not found: ${req.method} ${req.originalUrl}`,
     });
@@ -2088,8 +2283,8 @@ app.use(
 
     res.status(500).json({
       success: false,
-
       message:
+        err.message ||
         "Internal server error",
     });
   }
@@ -2112,6 +2307,10 @@ app.listen(
 
     console.log(
       `🌐 http://localhost:${PORT}`
+    );
+
+    console.log(
+      "🎙️ Voice Assessment API: /api/voice-assessment"
     );
 
     console.log(

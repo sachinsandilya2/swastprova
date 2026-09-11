@@ -1,8 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../firebase";
 
-const API_URL = "https://swastprova-2.onrender.com";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://swastprova-2.onrender.com";
 
 export default function VoiceAssessment() {
+  const navigate = useNavigate();
+
+  const [user, setUser] = useState(null);
+
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState("");
   const [audioBlob, setAudioBlob] = useState(null);
@@ -11,14 +20,27 @@ export default function VoiceAssessment() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
 
-  // ==========================================
+  // =====================================================
+  // FIREBASE AUTH
+  // =====================================================
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // =====================================================
   // RECORDING TIMER
-  // ==========================================
+  // =====================================================
 
   useEffect(() => {
     if (isRecording) {
@@ -32,9 +54,9 @@ export default function VoiceAssessment() {
     return () => clearInterval(timerRef.current);
   }, [isRecording]);
 
-  // ==========================================
+  // =====================================================
   // FORMAT TIME
-  // ==========================================
+  // =====================================================
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -46,16 +68,20 @@ export default function VoiceAssessment() {
     )}`;
   };
 
-  // ==========================================
+  // =====================================================
   // START RECORDING
-  // ==========================================
+  // =====================================================
 
   const startRecording = async () => {
     try {
       setError("");
       setResult(null);
+      setSaved(false);
 
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+      ) {
         setError("Your browser does not support microphone recording.");
         return;
       }
@@ -64,20 +90,37 @@ export default function VoiceAssessment() {
         audio: true,
       });
 
-      const mediaRecorder = new MediaRecorder(stream);
+      let mimeType = "audio/webm";
+
+      if (!MediaRecorder.isTypeSupported("audio/webm")) {
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          mimeType = "audio/webm;codecs=opus";
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          mimeType = "audio/mp4";
+        } else {
+          mimeType = "";
+        }
+      }
+
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
 
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = () => {
+        const actualType =
+          mediaRecorder.mimeType || mimeType || "audio/webm";
+
         const blob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
+          type: actualType,
         });
 
         const url = URL.createObjectURL(blob);
@@ -88,12 +131,12 @@ export default function VoiceAssessment() {
         stream.getTracks().forEach((track) => track.stop());
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(250);
 
       setRecordingTime(0);
       setIsRecording(true);
     } catch (err) {
-      console.error(err);
+      console.error("Microphone error:", err);
 
       setError(
         "Microphone permission is required. Please allow microphone access and try again."
@@ -101,9 +144,9 @@ export default function VoiceAssessment() {
     }
   };
 
-  // ==========================================
+  // =====================================================
   // STOP RECORDING
-  // ==========================================
+  // =====================================================
 
   const stopRecording = () => {
     if (
@@ -116,21 +159,79 @@ export default function VoiceAssessment() {
     setIsRecording(false);
   };
 
-  // ==========================================
+  // =====================================================
   // RESET
-  // ==========================================
+  // =====================================================
 
   const resetAssessment = () => {
+    if (audioURL) {
+      URL.revokeObjectURL(audioURL);
+    }
+
     setAudioURL("");
     setAudioBlob(null);
     setRecordingTime(0);
     setResult(null);
     setError("");
+    setSaved(false);
   };
 
-  // ==========================================
-  // ANALYZE VOICE
-  // ==========================================
+  // =====================================================
+  // SAVE RESULT TO FIRESTORE
+  // =====================================================
+
+  const saveResultToFirebase = async (data) => {
+    if (!user) {
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "distressAssessments"), {
+        userId: user.uid,
+
+        assessmentType: "Voice Assessment",
+        source: "AI Voice Screening",
+        monitoringType: "PS-94 Dynamic Distress Monitoring",
+
+        voiceStressScore:
+          Number(data.voiceStressScore ?? data.distressScore ?? 0),
+
+        distressScore: Number(data.distressScore ?? 0),
+
+        riskLevel: data.riskLevel || "Unknown",
+
+        voiceMetrics: data.voiceMetrics || {},
+
+        indicators: Array.isArray(data.indicators)
+          ? data.indicators
+          : [],
+
+        recommendedSupport: Array.isArray(data.recommendedSupport)
+          ? data.recommendedSupport
+          : [],
+
+        summary: data.summary || "",
+        message: data.message || "",
+
+        safetyFlag: Boolean(data.safetyFlag),
+        safetyPriority: data.safetyPriority || "Normal",
+
+        createdAt: serverTimestamp(),
+      });
+
+      setSaved(true);
+    } catch (firebaseError) {
+      console.error("Firebase save error:", firebaseError);
+
+      setError(
+        "Voice analysis completed, but the result could not be saved to monitoring history."
+      );
+    }
+  };
+
+  // =====================================================
+  // ANALYZE VOICE WITH GEMINI
+  // =====================================================
 
   const analyzeVoice = async () => {
     if (!audioBlob) {
@@ -138,85 +239,80 @@ export default function VoiceAssessment() {
       return;
     }
 
+    if (recordingTime < 10) {
+      setError(
+        "Please record at least 10 seconds of natural speech for a better screening."
+      );
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
       setResult(null);
+      setSaved(false);
 
       const formData = new FormData();
 
-      formData.append("audio", audioBlob, "voice-assessment.webm");
+      const extension = audioBlob.type.includes("mp4")
+        ? "mp4"
+        : "webm";
 
-      const response = await fetch(`${API_URL}/api/voice-assessment`, {
-        method: "POST",
-        body: formData,
-      });
+      formData.append(
+        "audio",
+        audioBlob,
+        `voice-assessment.${extension}`
+      );
 
-      if (!response.ok) {
-        throw new Error("Voice analysis service is unavailable.");
+      const response = await fetch(
+        `${API_URL}/api/voice-assessment`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(
+          "Invalid response received from voice-analysis server."
+        );
       }
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            `Voice analysis failed with status ${response.status}.`
+        );
+      }
 
       if (!data.success) {
-        throw new Error(data.message || "Voice analysis failed.");
+        throw new Error(
+          data.message || "Voice analysis failed."
+        );
       }
 
       setResult(data);
+
+      await saveResultToFirebase(data);
     } catch (err) {
       console.error("Voice assessment error:", err);
 
-      /*
-       * DEMO FALLBACK
-       *
-       * This fallback is only for frontend demonstration.
-       * Replace it with the real backend response once
-       * /api/voice-assessment is implemented.
-       */
-
-      setResult({
-        success: true,
-        demo: true,
-
-        voiceStressScore: 42,
-        distressScore: 42,
-        riskLevel: "Moderate",
-
-        indicators: [
-          "Speech pattern analysis completed",
-          "Pause and hesitation markers detected",
-          "Voice energy variation observed",
-          "Emotional distress indicators screened",
-        ],
-
-        voiceMetrics: {
-          speechRate: "Normal",
-          pausePattern: "Moderate",
-          pitchVariation: "Moderate",
-          voiceEnergy: "Normal",
-        },
-
-        recommendedSupport: [
-          "Consider speaking with a counsellor",
-          "Continue periodic mental-health monitoring",
-          "Complete the mental-health assessment for a combined screening result",
-        ],
-
-        message:
-          "Voice screening completed. This result is a screening indicator and not a medical diagnosis.",
-      });
-
       setError(
-        "Live voice-analysis API is not connected yet. Showing demo analysis."
+        err.message ||
+          "Unable to analyze the voice. Please try again."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // ==========================================
+  // =====================================================
   // RISK COLOR
-  // ==========================================
+  // =====================================================
 
   const getRiskColor = (risk) => {
     const value = String(risk || "").toLowerCase();
@@ -229,9 +325,24 @@ export default function VoiceAssessment() {
     return "#374151";
   };
 
-  // ==========================================
+  // =====================================================
+  // RISK BACKGROUND
+  // =====================================================
+
+  const getRiskBackground = (risk) => {
+    const value = String(risk || "").toLowerCase();
+
+    if (value === "critical") return "#fef2f2";
+    if (value === "high") return "#fff1f2";
+    if (value === "moderate") return "#fffbeb";
+    if (value === "low") return "#f0fdf4";
+
+    return "#f9fafb";
+  };
+
+  // =====================================================
   // PAGE
-  // ==========================================
+  // =====================================================
 
   return (
     <div
@@ -268,7 +379,7 @@ export default function VoiceAssessment() {
               padding: "7px 12px",
               borderRadius: "20px",
               fontSize: "13px",
-              fontWeight: "600",
+              fontWeight: "700",
               marginBottom: "12px",
             }}
           >
@@ -293,8 +404,10 @@ export default function VoiceAssessment() {
               fontSize: "15px",
             }}
           >
-            Record a short voice sample to screen speech patterns,
-            pauses, pitch variation and other voice-based distress indicators.
+            Record a short natural voice sample. SWASTPROVA analyzes
+            speech-related indicators such as pauses, speech pattern,
+            pitch variation and voice energy to generate a screening
+            indicator.
           </p>
         </div>
 
@@ -312,10 +425,10 @@ export default function VoiceAssessment() {
             lineHeight: 1.6,
           }}
         >
-          <strong>Privacy & Safety:</strong> Voice analysis is intended for
-          mental-health screening and early distress detection. It does not
-          provide a medical diagnosis or legally determine a person's
-          condition.
+          <strong>Privacy & Safety:</strong> This is an AI-assisted
+          screening system. It does not diagnose depression, PTSD,
+          anxiety or any other medical condition. Voice indicators
+          should not be treated as clinical proof.
         </div>
 
         {/* RECORDING CARD */}
@@ -336,12 +449,13 @@ export default function VoiceAssessment() {
               height: "110px",
               margin: "0 auto 20px",
               borderRadius: "50%",
-              background: isRecording ? "#fee2e2" : "#eef2ff",
+              background: isRecording
+                ? "#fee2e2"
+                : "#eef2ff",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: "46px",
-              transition: "0.3s",
             }}
           >
             {isRecording ? "🔴" : "🎙️"}
@@ -353,7 +467,9 @@ export default function VoiceAssessment() {
               color: "#111827",
             }}
           >
-            {isRecording ? "Recording in progress..." : "Voice Recording"}
+            {isRecording
+              ? "Recording in progress..."
+              : "Voice Recording"}
           </h2>
 
           <p
@@ -371,7 +487,9 @@ export default function VoiceAssessment() {
             style={{
               fontSize: "28px",
               fontWeight: "700",
-              color: isRecording ? "#dc2626" : "#374151",
+              color: isRecording
+                ? "#dc2626"
+                : "#374151",
               marginBottom: "20px",
             }}
           >
@@ -454,19 +572,26 @@ export default function VoiceAssessment() {
                   disabled={loading}
                   style={{
                     border: "none",
-                    background: loading ? "#9ca3af" : "#059669",
+                    background: loading
+                      ? "#9ca3af"
+                      : "#059669",
                     color: "#ffffff",
                     padding: "12px 22px",
                     borderRadius: "9px",
                     fontWeight: "600",
-                    cursor: loading ? "not-allowed" : "pointer",
+                    cursor: loading
+                      ? "not-allowed"
+                      : "pointer",
                   }}
                 >
-                  {loading ? "Analyzing Voice..." : "🔍 Analyze Voice"}
+                  {loading
+                    ? "🤖 Gemini Analyzing..."
+                    : "🤖 Analyze with Gemini"}
                 </button>
 
                 <button
                   onClick={resetAssessment}
+                  disabled={loading}
                   style={{
                     border: "1px solid #d1d5db",
                     background: "#ffffff",
@@ -474,7 +599,9 @@ export default function VoiceAssessment() {
                     padding: "12px 22px",
                     borderRadius: "9px",
                     fontWeight: "600",
-                    cursor: "pointer",
+                    cursor: loading
+                      ? "not-allowed"
+                      : "pointer",
                   }}
                 >
                   Record Again
@@ -484,7 +611,7 @@ export default function VoiceAssessment() {
           )}
         </div>
 
-        {/* ERROR / DEMO MESSAGE */}
+        {/* ERROR */}
 
         {error && (
           <div
@@ -514,33 +641,60 @@ export default function VoiceAssessment() {
               boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
             }}
           >
-            <h2
+            <div
               style={{
-                marginTop: 0,
-                color: "#111827",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "15px",
+                flexWrap: "wrap",
+                marginBottom: "20px",
               }}
             >
-              Voice Assessment Result
-            </h2>
-
-            {result.demo && (
-              <div
+              <h2
                 style={{
-                  background: "#fefce8",
-                  border: "1px solid #fde68a",
-                  color: "#854d0e",
-                  padding: "12px",
-                  borderRadius: "10px",
-                  marginBottom: "20px",
-                  fontSize: "14px",
+                  margin: 0,
+                  color: "#111827",
                 }}
               >
-                Demo result shown because the live voice-analysis API is not
-                connected yet.
-              </div>
-            )}
+                Voice Assessment Result
+              </h2>
 
-            {/* SCORE */}
+              {saved && (
+                <span
+                  style={{
+                    background: "#dcfce7",
+                    color: "#166534",
+                    padding: "7px 12px",
+                    borderRadius: "20px",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                  }}
+                >
+                  ✓ Saved to Monitoring
+                </span>
+              )}
+            </div>
+
+            {/* GEMINI BADGE */}
+
+            <div
+              style={{
+                background: "#eef2ff",
+                border: "1px solid #c7d2fe",
+                color: "#3730a3",
+                padding: "12px",
+                borderRadius: "10px",
+                marginBottom: "20px",
+                fontSize: "13px",
+              }}
+            >
+              🤖 <strong>Gemini AI Analysis:</strong> The recorded
+              voice was processed through the SWASTPROVA backend for
+              AI-assisted voice screening.
+            </div>
+
+            {/* SCORES */}
 
             <div
               style={{
@@ -566,7 +720,7 @@ export default function VoiceAssessment() {
                     marginBottom: "8px",
                   }}
                 >
-                  Voice Stress Score
+                  Voice Stress Indicator
                 </div>
 
                 <div
@@ -623,13 +777,15 @@ export default function VoiceAssessment() {
                     fontSize: "12px",
                   }}
                 >
-                  Combined screening score
+                  PS-94 monitoring indicator
                 </div>
               </div>
 
               <div
                 style={{
-                  background: "#f9fafb",
+                  background: getRiskBackground(
+                    result.riskLevel
+                  ),
                   borderRadius: "14px",
                   padding: "20px",
                   textAlign: "center",
@@ -649,7 +805,9 @@ export default function VoiceAssessment() {
                   style={{
                     fontSize: "28px",
                     fontWeight: "800",
-                    color: getRiskColor(result.riskLevel),
+                    color: getRiskColor(
+                      result.riskLevel
+                    ),
                   }}
                 >
                   {result.riskLevel || "Unknown"}
@@ -661,7 +819,9 @@ export default function VoiceAssessment() {
 
             {result.voiceMetrics && (
               <div style={{ marginBottom: "24px" }}>
-                <h3 style={{ color: "#111827" }}>Voice Indicators</h3>
+                <h3 style={{ color: "#111827" }}>
+                  Voice Indicators
+                </h3>
 
                 <div
                   style={{
@@ -689,7 +849,10 @@ export default function VoiceAssessment() {
                             textTransform: "capitalize",
                           }}
                         >
-                          {key.replace(/([A-Z])/g, " $1")}
+                          {key.replace(
+                            /([A-Z])/g,
+                            " $1"
+                          )}
                         </div>
 
                         <strong
@@ -722,12 +885,40 @@ export default function VoiceAssessment() {
                       lineHeight: 1.8,
                     }}
                   >
-                    {result.indicators.map((item, index) => (
-                      <li key={index}>{item}</li>
-                    ))}
+                    {result.indicators.map(
+                      (item, index) => (
+                        <li key={index}>{item}</li>
+                      )
+                    )}
                   </ul>
                 </div>
               )}
+
+            {/* SUMMARY */}
+
+            {result.summary && (
+              <div
+                style={{
+                  background: "#f9fafb",
+                  borderRadius: "12px",
+                  padding: "18px",
+                  marginBottom: "20px",
+                  color: "#374151",
+                  lineHeight: 1.7,
+                }}
+              >
+                <strong>AI Screening Summary</strong>
+
+                <p
+                  style={{
+                    marginBottom: 0,
+                    marginTop: "8px",
+                  }}
+                >
+                  {result.summary}
+                </p>
+              </div>
+            )}
 
             {/* RECOMMENDATIONS */}
 
@@ -758,14 +949,16 @@ export default function VoiceAssessment() {
                       lineHeight: 1.8,
                     }}
                   >
-                    {result.recommendedSupport.map((item, index) => (
-                      <li key={index}>{item}</li>
-                    ))}
+                    {result.recommendedSupport.map(
+                      (item, index) => (
+                        <li key={index}>{item}</li>
+                      )
+                    )}
                   </ul>
                 </div>
               )}
 
-            {/* HIGH RISK ALERT */}
+            {/* HIGH / CRITICAL */}
 
             {["high", "critical"].includes(
               String(result.riskLevel || "").toLowerCase()
@@ -781,14 +974,148 @@ export default function VoiceAssessment() {
                   lineHeight: 1.6,
                 }}
               >
-                <strong>⚠️ Elevated Distress Indicator</strong>
+                <strong>
+                  ⚠️ Elevated Distress Indicator
+                </strong>
 
-                <br />
+                <p
+                  style={{
+                    marginBottom: 0,
+                  }}
+                >
+                  The screening result indicates elevated
+                  distress-related markers. Consider timely
+                  professional support and appropriate safety
+                  assessment.
+                </p>
 
-                The screening result indicates elevated distress markers.
-                Consider timely professional support and safety assessment.
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    flexWrap: "wrap",
+                    marginTop: "15px",
+                  }}
+                >
+                  <button
+                    onClick={() =>
+                      navigate("/psychologists")
+                    }
+                    style={{
+                      border: "none",
+                      background: "#dc2626",
+                      color: "#fff",
+                      padding: "11px 18px",
+                      borderRadius: "8px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Talk to Psychologist
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      navigate("/emergency-support")
+                    }
+                    style={{
+                      border:
+                        "1px solid #dc2626",
+                      background: "#fff",
+                      color: "#dc2626",
+                      padding: "11px 18px",
+                      borderRadius: "8px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Emergency Support
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      navigate("/protection-support")
+                    }
+                    style={{
+                      border:
+                        "1px solid #7f1d1d",
+                      background: "#fff",
+                      color: "#7f1d1d",
+                      padding: "11px 18px",
+                      borderRadius: "8px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Protection Support
+                  </button>
+                </div>
               </div>
             )}
+
+            {/* MONITORING BUTTONS */}
+
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                flexWrap: "wrap",
+                marginBottom: "20px",
+              }}
+            >
+              <button
+                onClick={() =>
+                  navigate("/progress")
+                }
+                style={{
+                  border: "none",
+                  background: "#4f46e5",
+                  color: "#fff",
+                  padding: "12px 18px",
+                  borderRadius: "9px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                📈 View Distress Progress
+              </button>
+
+              <button
+                onClick={() =>
+                  navigate("/distress-prediction")
+                }
+                style={{
+                  border:
+                    "1px solid #c7d2fe",
+                  background: "#eef2ff",
+                  color: "#3730a3",
+                  padding: "12px 18px",
+                  borderRadius: "9px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                🔮 View Prediction
+              </button>
+
+              <button
+                onClick={() =>
+                  navigate("/victim-case-dashboard")
+                }
+                style={{
+                  border:
+                    "1px solid #d1d5db",
+                  background: "#fff",
+                  color: "#374151",
+                  padding: "12px 18px",
+                  borderRadius: "9px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                📋 Case Dashboard
+              </button>
+            </div>
 
             {/* DISCLAIMER */}
 
@@ -803,7 +1130,7 @@ export default function VoiceAssessment() {
               }}
             >
               {result.message ||
-                "Voice analysis is a screening tool and should not be treated as a medical diagnosis. Professional assessment should be used for clinical decisions."}
+                "Voice analysis is an AI-assisted screening indicator and should not be treated as a medical diagnosis. Professional assessment should be used for clinical decisions."}
             </div>
           </div>
         )}

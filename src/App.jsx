@@ -19,6 +19,10 @@ import Contact from "./pages/Contact";
 // AI Mental Health Assessment
 import Assessment from "./pages/Assessment";
 
+// PS-94: Dynamic Distress Monitoring
+import DistressPrediction from "./pages/DistressPrediction";
+import VictimCaseDashboard from "./pages/VictimCaseDashboard";
+
 // Voice Mental Health Assessment
 import VoiceAssessment from "./pages/VoiceAssessment";
 
@@ -99,6 +103,20 @@ function App() {
           element={<Assessment />}
         />
 
+        {/* ================= PS-94 DYNAMIC DISTRESS MONITORING ================= */}
+
+        <Route
+          path="/distress-prediction"
+          element={<DistressPrediction />}
+        />
+
+        {/* ================= PS-94 VICTIM CASE DASHBOARD ================= */}
+
+        <Route
+          path="/victim-case-dashboard"
+          element={<VictimCaseDashboard />}
+        />
+
         {/* ================= VOICE ASSESSMENT ================= */}
 
         <Route
@@ -120,7 +138,7 @@ function App() {
           element={<EmergencySupport />}
         />
 
-        {/* ================= PROGRESS / MONITORING ================= */}
+        {/* ================= PROGRESS / DYNAMIC MONITORING ================= */}
 
         <Route
           path="/progress"
