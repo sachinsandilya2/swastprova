@@ -26,7 +26,9 @@ const Register = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  // ==========================================
   // INPUT CHANGE
+  // ==========================================
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -39,7 +41,9 @@ const Register = () => {
     setMessage("");
   };
 
+  // ==========================================
   // REGISTER
+  // ==========================================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -51,10 +55,9 @@ const Register = () => {
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
 
-    // ==============================
+    // ==========================================
     // VALIDATION
-    // ==============================
-
+    // ==========================================
     if (!cleanName) {
       setError("Please enter your full name.");
       return;
@@ -88,7 +91,6 @@ const Register = () => {
       // ==========================================
       // 1. CREATE FIREBASE ACCOUNT
       // ==========================================
-
       console.log("🔥 Creating Firebase account...");
 
       const userCredential = await createUserWithEmailAndPassword(
@@ -104,7 +106,6 @@ const Register = () => {
       // ==========================================
       // 2. SAVE USER NAME IN FIREBASE
       // ==========================================
-
       await updateProfile(user, {
         displayName: cleanName,
       });
@@ -114,7 +115,6 @@ const Register = () => {
       // ==========================================
       // 3. SEND EXISTING BACKEND OTP
       // ==========================================
-
       console.log("📧 Sending verification OTP...");
 
       const response = await fetch(`${API_URL}/register/send-otp`, {
@@ -148,7 +148,6 @@ const Register = () => {
       // ==========================================
       // 4. SAVE TEMPORARY REGISTRATION DATA
       // ==========================================
-
       sessionStorage.setItem(
         "swastprovaRegistration",
         JSON.stringify({
@@ -172,7 +171,6 @@ const Register = () => {
       // ==========================================
       // 5. SUCCESS MESSAGE
       // ==========================================
-
       setMessage(
         "Account created successfully. OTP has been sent to your email."
       );
@@ -180,7 +178,6 @@ const Register = () => {
       // ==========================================
       // 6. GO TO OTP PAGE
       // ==========================================
-
       setTimeout(() => {
         navigate("/verify-otp", {
           state: {
@@ -195,7 +192,6 @@ const Register = () => {
       // ==========================================
       // FIREBASE ERROR HANDLING
       // ==========================================
-
       if (err?.code === "auth/email-already-in-use") {
         setError(
           "This email is already registered. Please login instead."
@@ -222,17 +218,38 @@ const Register = () => {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.circleOne}></div>
-      <div style={styles.circleTwo}></div>
+    <div
+      className="register-page"
+      style={styles.page}
+    >
+      {/* BACKGROUND CIRCLES */}
+      <div
+        className="register-circle-one"
+        style={styles.circleOne}
+      />
 
-      <div style={styles.container}>
+      <div
+        className="register-circle-two"
+        style={styles.circleTwo}
+      />
+
+      <div
+        className="register-container"
+        style={styles.container}
+      >
         {/* ======================================
             BRAND PANEL
         ====================================== */}
-
-        <div style={styles.brandPanel}>
-          <div style={styles.brandLogo}>🌱</div>
+        <div
+          className="register-brand-panel"
+          style={styles.brandPanel}
+        >
+          <div
+            className="register-brand-logo"
+            style={styles.brandLogo}
+          >
+            🌱
+          </div>
 
           <h1 style={styles.brandTitle}>
             Join Swastprova
@@ -244,7 +261,10 @@ const Register = () => {
             the first step toward better wellness.
           </p>
 
-          <div style={styles.quoteBox}>
+          <div
+            className="register-quote-box"
+            style={styles.quoteBox}
+          >
             <div style={styles.quote}>
               “Your wellbeing matters.”
             </div>
@@ -254,7 +274,10 @@ const Register = () => {
             </div>
           </div>
 
-          <div style={styles.miniFeatures}>
+          <div
+            className="register-mini-features"
+            style={styles.miniFeatures}
+          >
             <span>✓ Secure</span>
             <span>✓ Private</span>
             <span>✓ Supportive</span>
@@ -264,37 +287,71 @@ const Register = () => {
         {/* ======================================
             REGISTER CARD
         ====================================== */}
+        <div
+          className="register-card"
+          style={styles.card}
+        >
+          {/* MOBILE LOGO */}
+          <div
+            className="register-mobile-logo"
+            style={styles.mobileLogo}
+          >
+            🌱
+          </div>
 
-        <div style={styles.card}>
-          <div style={styles.mobileLogo}>🌱</div>
-
-          <div style={styles.heading}>
-            <h2 style={styles.headingTitle}>
+          {/* HEADING */}
+          <div
+            className="register-heading"
+            style={styles.heading}
+          >
+            <h2
+              className="register-heading-title"
+              style={styles.headingTitle}
+            >
               Create Account
             </h2>
 
-            <p style={styles.headingText}>
+            <p
+              className="register-heading-text"
+              style={styles.headingText}
+            >
               Join Swastprova and begin your wellness journey.
             </p>
           </div>
 
+          {/* ======================================
+              FORM
+          ====================================== */}
           <form
             onSubmit={handleSubmit}
+            className="register-form"
             style={styles.form}
           >
             {/* FULL NAME */}
-
-            <div style={styles.field}>
-              <label style={styles.label}>
+            <div
+              className="register-field"
+              style={styles.field}
+            >
+              <label
+                className="register-label"
+                style={styles.label}
+              >
                 Full Name
               </label>
 
-              <div style={styles.inputWrapper}>
-                <span style={styles.inputIcon}>
+              <div
+                className="register-input-wrapper"
+                style={styles.inputWrapper}
+              >
+                <span
+                  className="register-input-icon"
+                  style={styles.inputIcon}
+                >
                   👤
                 </span>
 
                 <input
+                  className="register-input"
                   type="text"
                   name="name"
                   placeholder="Enter your full name"
@@ -307,18 +364,30 @@ const Register = () => {
             </div>
 
             {/* EMAIL */}
-
-            <div style={styles.field}>
-              <label style={styles.label}>
+            <div
+              className="register-field"
+              style={styles.field}
+            >
+              <label
+                className="register-label"
+                style={styles.label}
+              >
                 Email Address
               </label>
 
-              <div style={styles.inputWrapper}>
-                <span style={styles.inputIcon}>
+              <div
+                className="register-input-wrapper"
+                style={styles.inputWrapper}
+              >
+                <span
+                  className="register-input-icon"
+                  style={styles.inputIcon}
+                >
                   ✉️
                 </span>
 
                 <input
+                  className="register-input"
                   type="email"
                   name="email"
                   placeholder="you@example.com"
@@ -331,18 +400,30 @@ const Register = () => {
             </div>
 
             {/* PASSWORD */}
-
-            <div style={styles.field}>
-              <label style={styles.label}>
+            <div
+              className="register-field"
+              style={styles.field}
+            >
+              <label
+                className="register-label"
+                style={styles.label}
+              >
                 Password
               </label>
 
-              <div style={styles.inputWrapper}>
-                <span style={styles.inputIcon}>
+              <div
+                className="register-input-wrapper"
+                style={styles.inputWrapper}
+              >
+                <span
+                  className="register-input-icon"
+                  style={styles.inputIcon}
+                >
                   🔒
                 </span>
 
                 <input
+                  className="register-input"
                   type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Create a password"
@@ -354,6 +435,7 @@ const Register = () => {
 
                 <button
                   type="button"
+                  className="register-eye-button"
                   onClick={() =>
                     setShowPassword((prev) => !prev)
                   }
@@ -370,18 +452,30 @@ const Register = () => {
             </div>
 
             {/* CONFIRM PASSWORD */}
-
-            <div style={styles.field}>
-              <label style={styles.label}>
+            <div
+              className="register-field"
+              style={styles.field}
+            >
+              <label
+                className="register-label"
+                style={styles.label}
+              >
                 Confirm Password
               </label>
 
-              <div style={styles.inputWrapper}>
-                <span style={styles.inputIcon}>
+              <div
+                className="register-input-wrapper"
+                style={styles.inputWrapper}
+              >
+                <span
+                  className="register-input-icon"
+                  style={styles.inputIcon}
+                >
                   🔐
                 </span>
 
                 <input
+                  className="register-input"
                   type={
                     showConfirmPassword
                       ? "text"
@@ -397,6 +491,7 @@ const Register = () => {
 
                 <button
                   type="button"
+                  className="register-eye-button"
                   onClick={() =>
                     setShowConfirmPassword(
                       (prev) => !prev
@@ -415,27 +510,31 @@ const Register = () => {
             </div>
 
             {/* ERROR */}
-
             {error && (
-              <div style={styles.error}>
+              <div
+                className="register-error"
+                style={styles.error}
+              >
                 <span>⚠️</span>
                 <span>{error}</span>
               </div>
             )}
 
             {/* SUCCESS */}
-
             {message && (
-              <div style={styles.success}>
+              <div
+                className="register-success"
+                style={styles.success}
+              >
                 <span>✓</span>
                 <span>{message}</span>
               </div>
             )}
 
             {/* SUBMIT */}
-
             <button
               type="submit"
+              className="register-primary-button"
               disabled={loading}
               style={{
                 ...styles.primaryButton,
@@ -452,8 +551,10 @@ const Register = () => {
           </form>
 
           {/* LOGIN */}
-
-          <div style={styles.loginArea}>
+          <div
+            className="register-login-area"
+            style={styles.loginArea}
+          >
             <span>
               Already have an account?
             </span>
@@ -468,8 +569,10 @@ const Register = () => {
           </div>
 
           {/* INFO */}
-
-          <div style={styles.info}>
+          <div
+            className="register-info"
+            style={styles.info}
+          >
             📧 We'll send a 6-digit OTP to verify your email.
           </div>
         </div>
@@ -478,7 +581,6 @@ const Register = () => {
       {/* ======================================
           RESPONSIVE CSS
       ====================================== */}
-
       <style>{`
         * {
           box-sizing: border-box;
@@ -489,6 +591,7 @@ const Register = () => {
           margin: 0;
           padding: 0;
           width: 100%;
+          overflow-x: hidden;
         }
 
         button,
@@ -497,12 +600,40 @@ const Register = () => {
         }
 
         .register-input-wrapper:focus-within {
-          border-color: #2563eb;
-          background: #ffffff;
+          border-color: #2563eb !important;
+          background: #ffffff !important;
           box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
         }
 
+        .register-primary-button {
+          transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease,
+            opacity 0.2s ease;
+        }
+
+        .register-primary-button:not(:disabled):hover {
+          transform: translateY(-1px);
+          box-shadow:
+            0 13px 28px rgba(37, 99, 235, 0.25);
+        }
+
+        .register-eye-button:hover {
+          opacity: 0.7;
+        }
+
+        .register-login-area button:hover {
+          text-decoration: underline;
+        }
+
+        /* ======================================
+           TABLET
+        ====================================== */
         @media (max-width: 900px) {
+          .register-page {
+            padding: 25px 15px !important;
+          }
+
           .register-container {
             max-width: 760px !important;
           }
@@ -514,22 +645,45 @@ const Register = () => {
           .register-card {
             padding: 35px 30px !important;
           }
+
+          .register-brand-title {
+            font-size: 34px !important;
+          }
         }
 
+        /* ======================================
+           MOBILE
+        ====================================== */
         @media (max-width: 700px) {
           .register-page {
             min-height: 100vh !important;
             min-height: 100dvh !important;
-            padding: 20px 12px !important;
+            padding: 16px 10px !important;
             align-items: flex-start !important;
+            overflow-y: auto !important;
+          }
+
+          .register-circle-one {
+            width: 260px !important;
+            height: 260px !important;
+            top: -120px !important;
+            left: -130px !important;
+          }
+
+          .register-circle-two {
+            width: 260px !important;
+            height: 260px !important;
+            bottom: -120px !important;
+            right: -130px !important;
           }
 
           .register-container {
             display: block !important;
             width: 100% !important;
             max-width: 520px !important;
+            margin: 8px auto !important;
             border-radius: 22px !important;
-            margin: 10px auto !important;
+            overflow: hidden !important;
           }
 
           .register-brand-panel {
@@ -553,63 +707,107 @@ const Register = () => {
 
           .register-heading-title {
             font-size: 27px !important;
+            line-height: 1.2 !important;
           }
 
           .register-heading-text {
             font-size: 13px !important;
+            line-height: 1.55 !important;
           }
 
           .register-form {
             gap: 14px !important;
           }
 
+          .register-field {
+            gap: 6px !important;
+          }
+
+          .register-label {
+            font-size: 12.5px !important;
+          }
+
           .register-input-wrapper {
+            width: 100% !important;
             min-height: 49px !important;
             border-radius: 12px !important;
           }
 
           .register-input {
+            min-width: 0 !important;
+            width: 100% !important;
             font-size: 14px !important;
             padding: 12px 8px !important;
           }
 
-          .register-primary-button {
-            min-height: 49px !important;
+          .register-input-icon {
+            flex-shrink: 0 !important;
+            padding-left: 12px !important;
             font-size: 14px !important;
+          }
+
+          .register-eye-button {
+            flex-shrink: 0 !important;
+            padding: 7px 10px !important;
+            font-size: 14px !important;
+          }
+
+          .register-error,
+          .register-success {
+            font-size: 11.5px !important;
+            line-height: 1.4 !important;
+            word-break: break-word !important;
+          }
+
+          .register-primary-button {
+            width: 100% !important;
+            min-height: 49px !important;
+            padding: 13px !important;
+            font-size: 14px !important;
+            border-radius: 12px !important;
           }
 
           .register-login-area {
             margin-top: 19px !important;
             padding-top: 16px !important;
+            font-size: 12px !important;
           }
 
           .register-info {
             margin-top: 15px !important;
             font-size: 10.5px !important;
+            line-height: 1.45 !important;
           }
         }
 
+        /* ======================================
+           SMALL PHONES
+        ====================================== */
         @media (max-width: 430px) {
           .register-page {
-            padding: 12px 8px !important;
+            padding: 10px 7px !important;
           }
 
           .register-container {
-            margin: 4px auto !important;
+            margin: 3px auto !important;
             border-radius: 18px !important;
           }
 
           .register-card {
-            padding: 24px 16px 20px !important;
+            padding: 23px 15px 19px !important;
             border-radius: 18px !important;
           }
 
           .register-mobile-logo {
             width: 52px !important;
             height: 52px !important;
-            font-size: 25px !important;
             border-radius: 16px !important;
+            font-size: 25px !important;
             margin-bottom: 15px !important;
+          }
+
+          .register-heading {
+            margin-bottom: 19px !important;
           }
 
           .register-heading-title {
@@ -618,6 +816,10 @@ const Register = () => {
 
           .register-heading-text {
             font-size: 12.5px !important;
+          }
+
+          .register-form {
+            gap: 13px !important;
           }
 
           .register-label {
@@ -630,7 +832,7 @@ const Register = () => {
 
           .register-input-icon {
             padding-left: 11px !important;
-            font-size: 14px !important;
+            font-size: 13px !important;
           }
 
           .register-input {
@@ -639,41 +841,96 @@ const Register = () => {
           }
 
           .register-eye-button {
-            padding: 7px 10px !important;
-            font-size: 14px !important;
+            padding: 7px 9px !important;
+            font-size: 13px !important;
           }
 
           .register-error,
           .register-success {
-            font-size: 11.5px !important;
+            font-size: 11px !important;
             padding: 9px 10px !important;
           }
 
+          .register-primary-button {
+            min-height: 47px !important;
+            font-size: 13.5px !important;
+          }
+
           .register-login-area {
-            font-size: 12px !important;
+            font-size: 11.5px !important;
           }
 
           .register-info {
-            padding: 9px 7px !important;
-            font-size: 10px !important;
+            padding: 8px 6px !important;
+            font-size: 9.5px !important;
           }
         }
 
+        /* ======================================
+           VERY SMALL PHONES
+        ====================================== */
         @media (max-width: 350px) {
+          .register-page {
+            padding: 8px 5px !important;
+          }
+
           .register-card {
-            padding: 21px 13px 18px !important;
+            padding: 20px 12px 17px !important;
+          }
+
+          .register-mobile-logo {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 23px !important;
+            margin-bottom: 13px !important;
           }
 
           .register-heading-title {
             font-size: 22px !important;
           }
 
+          .register-heading-text {
+            font-size: 11.5px !important;
+          }
+
+          .register-form {
+            gap: 11px !important;
+          }
+
+          .register-label {
+            font-size: 11.5px !important;
+          }
+
+          .register-input-wrapper {
+            min-height: 45px !important;
+          }
+
           .register-input {
-            font-size: 12.5px !important;
+            font-size: 12px !important;
+            padding: 10px 6px !important;
+          }
+
+          .register-input-icon {
+            padding-left: 9px !important;
+            font-size: 12px !important;
+          }
+
+          .register-eye-button {
+            padding: 6px 7px !important;
+            font-size: 12px !important;
           }
 
           .register-primary-button {
-            font-size: 13px !important;
+            min-height: 45px !important;
+            font-size: 12.5px !important;
+          }
+
+          .register-login-area {
+            font-size: 10.5px !important;
+          }
+
+          .register-info {
+            font-size: 9px !important;
           }
         }
       `}</style>
@@ -684,7 +941,6 @@ const Register = () => {
 // ==========================================
 // STYLES
 // ==========================================
-
 const styles = {
   page: {
     minHeight: "100vh",
@@ -918,6 +1174,7 @@ const styles = {
     fontSize: "13px",
     fontWeight: "600",
     alignItems: "flex-start",
+    wordBreak: "break-word",
   },
 
   success: {
@@ -930,6 +1187,7 @@ const styles = {
     fontSize: "13px",
     fontWeight: "600",
     alignItems: "flex-start",
+    wordBreak: "break-word",
   },
 
   loginArea: {
